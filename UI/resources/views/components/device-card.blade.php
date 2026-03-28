@@ -24,9 +24,13 @@
     <div class="mt-5 h-px bg-white/12"></div>
 
     <div class="pt-10 text-center">
-        <div class="text-[60px] font-bold tracking-wide text-white">{{ $temperature }}</div>
-        <div class="mt-5 text-[24px] text-white">Wilgotność : {{ $humidity }}</div>
+    <div id="temp-{{ $name }}" class="text-[60px] font-bold tracking-wide text-white">
+        {{ $temperature }}
     </div>
+    <div class="mt-5 text-[24px] text-white">
+        Wilgotność : <span id="hum-{{ $name }}">{{ $humidity }}</span>
+    </div>
+</div>
 
     <div class="mt-10 h-px bg-white/12"></div>
 
