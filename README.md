@@ -1,1 +1,1 @@
-#thermostat-IoT - student project
+# thermostat-IoT - student project
