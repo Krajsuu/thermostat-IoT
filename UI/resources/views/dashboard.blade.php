@@ -46,3 +46,32 @@
         
     </section>
 @endsection
+
+@section('scripts')
+<script>
+    function updateDeviceStatus() {
+        fetch('/fetch-status')
+            .then(response => response.json())
+            .then(data => {
+                if (data.temperature) {
+                    // Aktualizujemy temperaturę w Salonie (ID: temp-Salon)
+                    const tempElement = document.getElementById('temp-Salon');
+                    if (tempElement) {
+                        tempElement.innerText = data.temperature.toFixed(1) + "°C";
+                    }
+                    
+                    // Jeśli Twój kontroler zwraca też wilgotność (hum)
+                    const humElement = document.getElementById('hum-Salon');
+                    if (humElement && data.humidity) {
+                        humElement.innerText = data.humidity + "%";
+                    }
+                }
+            })
+            .catch(error => console.error('Błąd pobierania danych:', error));
+    }
+
+    // Uruchom od razu i powtarzaj co 5 sekund
+    updateDeviceStatus();
+    setInterval(updateDeviceStatus, 5000);
+</script>
+@endsection
