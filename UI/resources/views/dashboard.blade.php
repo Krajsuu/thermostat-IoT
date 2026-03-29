@@ -44,7 +44,7 @@
 @section('scripts')
 <script>
     function updateDeviceStatus() {
-        fetch('/api/device-status')
+        fetch('/fetch-status')
             .then(response => response.json())
             .then(data => {
                 if (data.temperature) {

@@ -8,36 +8,45 @@ use InfluxDB2\Client;
 class InfluxController extends Controller
 {
     public function getLatestData()
-    {
-        $client = new Client([
-            "url" => env('INFLUXDB_URL'),
-            "token" => env('INFLUXDB_TOKEN'),
-            "bucket" => env('INFLUXDB_BUCKET'),
-            "org" => env('INFLUXDB_ORG'),
-            "precision" => \InfluxDB2\Model\WritePrecision::S
-        ]);
+{
+    $client = new \InfluxDB2\Client([
+        "url" => env('INFLUXDB_URL'),
+        "token" => env('INFLUXDB_TOKEN'),
+        "bucket" => env('INFLUXDB_BUCKET'),
+        "org" => env('INFLUXDB_ORG'),
+    ]);
 
-        $queryApi = $client->createQueryApi();
+    $queryApi = $client->createQueryApi();
 
-        $query = 'from(bucket: "'.env('INFLUXDB_BUCKET').'")
-            |> range(start: -1h)
-            |> filter(fn: (r) => r["_measurement"] == "temperature")
-            |> filter(fn: (r) => r["sensor_id"] == "704BCA46BA4C")
-            |> filter(fn: (r) => r["_field"] == "temp")
-            |> last()';
+    // Zapytanie do odpowiedniego measurementu: "temperature"
+    $query = 'from(bucket: "'.env('INFLUXDB_BUCKET').'")
+        |> range(start: -1h)
+        |> filter(fn: (r) => r["_measurement"] == "temperature")
+        |> last()';
 
-        $result = $queryApi->query($query);
-        
-        // Wyciągamy samą wartość
-        $temp = 0;
-        if (isset($result[0]->records[0])) {
-            $temp = $result[0]->records[0]->getValue();
+    $tables = $queryApi->query($query);
+    
+    $data = [
+        'temperature' => 0,
+        'humidity' => 0,
+        'target' => 0,
+        'heater' => 'OFF',
+        'fan' => 'OFF'
+    ];
+
+    foreach ($tables as $table) {
+        foreach ($table->records as $record) {
+            $field = $record->getField();
+            $value = $record->getValue();
+
+            if ($field == 'temp') $data['temperature'] = round($value, 1);
+            if ($field == 'hum') $data['humidity'] = round($value, 0);
+            if ($field == 'target') $data['target'] = round($value, 1);
+            if ($field == 'heater') $data['heater'] = ($value == 1) ? 'ON' : 'OFF';
+            if ($field == 'fan') $data['fan'] = ($value == 1) ? 'ON' : 'OFF';
         }
-
-        return response()->json([
-            'temperature' => $temp,
-            'unit' => '°C',
-            'device_id' => '704BCA46BA4C'
-        ]);
     }
+
+    return response()->json($data);
+}
 }
