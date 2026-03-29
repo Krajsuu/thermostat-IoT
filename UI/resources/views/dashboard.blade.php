@@ -5,8 +5,14 @@
         <div class="pointer-events-none absolute inset-0 flex justify-center">
             <div class="h-[100px] w-[300px] rounded-full bg-blue-500/20 blur-[100px]"></div>
         </div>
-        <h1 class="text-5xl font-bold text-white">Twoje urządzenia</h1>
-        <p class="mt-3 text-2xl text-white/60">Zarządzaj ustawieniami temperatury</p>
+
+        <h1 class="text-3xl sm:text-5xl font-bold text-white">
+            Twoje urządzenia
+        </h1>
+
+        <p class="mt-3 text-base sm:text-2xl text-white/60">
+            Zarządzaj ustawieniami temperatury
+        </p>
     </section>
 
     <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-16 px-16 py-12 justify-items-center">

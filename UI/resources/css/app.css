@@ -9,3 +9,43 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+.temperature-slider {
+    height: 24px;
+    cursor: pointer;
+}
+
+.temperature-slider::-webkit-slider-runnable-track {
+    height: 10px;
+    border-radius: 9999px;
+    background: rgba(96, 165, 250, 0.18);
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.22);
+}
+
+.temperature-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    margin-top: -3px;
+    width: 16px;
+    height: 16px;
+    border-radius: 9999px;
+    background: rgb(96, 165, 250);
+    box-shadow: 0 0 14px rgba(96, 165, 250, 0.9);
+    border: none;
+}
+
+.temperature-slider::-moz-range-track {
+    height: 10px;
+    border-radius: 9999px;
+    background: rgba(96, 165, 250, 0.18);
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.22);
+}
+
+.temperature-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 9999px;
+    background: rgb(96, 165, 250);
+    box-shadow: 0 0 14px rgba(96, 165, 250, 0.9);
+    border: none;
+}
