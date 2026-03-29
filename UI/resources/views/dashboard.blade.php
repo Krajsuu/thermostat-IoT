@@ -16,34 +16,36 @@
     </section>
 
     <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-16 px-16 py-12 justify-items-center">
-        <x-device-card
-            name="Salon"
-            status="Online"
-            temperature="22.4°C"
-            humidity="48%"
-            mode="AUTO"
-            heating="ON"
-        />
+        @foreach($devices as $device)
 
-        <x-device-card
-            name="Pokój"
-            status="Online"
-            temperature="25°C"
-            humidity="42%"
-            mode="MANUAL"
-            heating="OFF"
-        />
+            @if($device['is_online'])
+                <a href="{{ route('control.panel', ['room' => $device['slug']]) }}"
+                class="block flex justify-center transition hover:scale-[1.02]">
+            @else
+                <div
+                    onclick="window.dispatchEvent(new CustomEvent('notify', {
+                        detail: { message: '{{ $device['name'] }} jest offline', type: 'error' }
+                    }))"
+                    class="flex justify-center opacity-60 cursor-not-allowed"
+                >
+            @endif
 
-        <x-device-card
-            name="Biuro"
-            status="Offline"
-            temperature="--- °C"
-            humidity="---%"
-            mode="MANUAL"
-            heating="OFF"
-        />
+                <x-device-card
+                    :name="$device['name']"
+                    :status="$device['is_online'] ? 'Online' : 'Offline'"
+                    :temperature="$device['temperature']"
+                    :humidity="$device['humidity']"
+                    :mode="$device['mode']"
+                    :heating="$device['heating']"
+                />
 
-        
+            @if($device['is_online'])
+                </a>
+            @else
+                </div>
+            @endif
+
+        @endforeach
     </section>
 @endsection
 
@@ -75,3 +77,4 @@
     setInterval(updateDeviceStatus, 5000);
 </script>
 @endsection
+
