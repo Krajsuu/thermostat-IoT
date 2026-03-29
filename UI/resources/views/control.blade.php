@@ -13,13 +13,12 @@
                         temperature: {{ $temperature }},
                         activeMode: null,
 
+                        historyOpen: false,
+                        historyTab: '24h',
+
                         setMode(mode) {
                             if (mode === 'auto') {
-                                if (this.activeMode === 'auto') {
-                                    this.activeMode = null
-                                } else {
-                                    this.activeMode = 'auto'
-                                }
+                                this.activeMode = this.activeMode === 'auto' ? null : 'auto'
                                 return
                             }
 
@@ -27,21 +26,23 @@
                                 return
                             }
 
-                            if (this.activeMode === mode) {
-                                this.activeMode = null
-                            } else {
-                                this.activeMode = mode
-                            }
+                            this.activeMode = this.activeMode === mode ? null : mode
                         },
 
                         isAuto() {
                             return this.activeMode === 'auto'
+                        },
+
+                        tabClass(tab) {
+                            return this.historyTab === tab
+                                ? 'rounded-full bg-blue-500/15 px-6 py-2 text-2xl font-medium text-blue-300 shadow-[0_0_20px_rgba(59,130,246,0.18)] transition'
+                                : 'rounded-full px-6 py-2 text-2xl font-medium text-blue-200/80 transition hover:text-blue-200'
                         }
                     }"
                     class="relative text-center"
                 >
                     <div class="relative mb-2 w-fit mx-auto">
-                        <button class="absolute -left-12 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 backdrop-blur-md text-white/70 transition hover:bg-white/10 hover:text-white hover:shadow-[0_0_15px_rgba(59,130,246,0.4)]">
+                        <button onclick="window.location.href='{{ route('dashboard') }}'" class="absolute -left-12 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 backdrop-blur-md text-white/70 transition hover:bg-white/10 hover:text-white hover:shadow-[0_0_15px_rgba(59,130,246,0.4)]">
                             <svg width="25" height="25" viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M12.5 21C7.8 21 4 17.2 4 12.5C4 7.8 7.8 4 12.5 4C17.2 4 21 7.8 21 12.5C21 17.2 17.2 21 12.5 21ZM12.5 5C8.35 5 5 8.35 5 12.5C5 16.65 8.35 20 12.5 20C16.65 20 20 16.65 20 12.5C20 8.35 16.65 5 12.5 5Z" fill="#E5E7EB"/>
                                 <path d="M12.65 17.35L7.80005 12.5L12.65 7.64999L13.35 8.34999L9.20005 12.5L13.35 16.65L12.65 17.35Z" fill="#E5E7EB"/>
@@ -50,7 +51,7 @@
                         </button>
 
                         <h1 class="text-3xl font-semibold sm:text-4xl text-center">
-                            Salon
+                            {{ $room['name'] }}
                         </h1>
                     </div>
 
@@ -157,11 +158,20 @@
                         <div class="relative mx-auto w-full max-w-[360px]">
                             <x-history :points="$historyPoints" />
 
-                            <button type="button" class="absolute -right-6 top-0 rounded-full border border-blue-400/40 bg-blue-500/10 px-4 py-1.5 text-xs text-blue-200 shadow-[0_0_20px_rgba(59,130,246,0.18)] transition hover:bg-blue-500/20">
+                            <button
+                                type="button"
+                                @click="historyOpen = true"
+                                class="absolute -right-4 top-0 rounded-full border border-blue-400/40 bg-blue-500/10 px-4 py-1.5 text-xs text-blue-200 shadow-[0_0_20px_rgba(59,130,246,0.18)] transition hover:bg-blue-500/20"
+                            >
                                 Historia
                             </button>
                         </div>
                     </div>
+                    <x-history-modal
+                        :historyPoints24h="$historyPoints24h"
+                        :historyPoints7d="$historyPoints7d"
+                        :historyPoints30d="$historyPoints30d"
+                    />
                 </div>
             </div>
         </div>

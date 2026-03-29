@@ -1,12 +1,9 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\ControlPanelController;
-use App\Http\Controllers\InfluxController;
+use App\Http\Controllers\{HomeController , ControlPanelController, InfluxController};
 
-Route::get('/', function () {
-    return view('dashboard');
-});
+Route::get('/', [HomeController::class, 'index'])->name('dashboard');
 
-Route::get('/control-panel', [ControlPanelController::class, 'index']);
+Route::get('/control-panel/{room}', [ControlPanelController::class, 'index'])->name('control.panel');
 Route::get('/fetch-status', [InfluxController::class, 'getLatestData']);

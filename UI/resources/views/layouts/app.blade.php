@@ -23,5 +23,7 @@
 
     </div>
     @yield('scripts')
+
+    <x-allert />
 </body>
 </html>

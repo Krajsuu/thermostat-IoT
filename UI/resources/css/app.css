@@ -49,3 +49,7 @@
     box-shadow: 0 0 14px rgba(96, 165, 250, 0.9);
     border: none;
 }
+
+[x-cloak] {
+    display: none !important;
+}
