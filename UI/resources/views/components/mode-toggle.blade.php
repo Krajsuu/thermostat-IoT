@@ -10,8 +10,8 @@
     class="flex w-full items-center justify-between rounded-2xl border px-4 py-4 backdrop-blur-md transition duration-200 disabled:cursor-not-allowed"
     :class="[
         activeMode === '{{ $mode }}'
-            ? 'border-blue-400/30 bg-white/15 shadow-[0_0_20px_rgba(59,130,246,0.10)]'
-            : 'border-white/10 bg-white/10 hover:bg-white/15',
+            ? 'border-blue-400/30 bg-white/8 shadow-[0_0_20px_rgba(59,130,246,0.10)]'
+            : 'border-white/10 bg-white/5 hover:bg-white/15',
         activeMode === 'auto' && '{{ $mode }}' !== 'auto'
             ? 'opacity-40'
             : 'opacity-100'

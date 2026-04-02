@@ -8,14 +8,15 @@
     </div>
 
     <div class="flex h-full items-center gap-7">
-        <button
+        <a href="{{ route('profile') }}"
             class="flex h-10 w-10 items-center justify-center text-white/40 transition duration-200 hover:text-[#4da3ff] hover:drop-shadow-[0_0_6px_rgba(77,163,255,0.6)]"
             aria-label="Profil"
         >
-            <svg class="h-6 w-6" viewBox="0 0 27 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M25.0833 28V25.0833C25.0833 23.5362 24.4687 22.0525 23.3748 20.9585C22.2808 19.8646 20.7971 19.25 19.25 19.25H7.58333C6.03624 19.25 4.55251 19.8646 3.45854 20.9585C2.36458 22.0525 1.75 23.5362 1.75 25.0833V28M19.25 7.58333C19.25 10.805 16.6383 13.4167 13.4167 13.4167C10.195 13.4167 7.58333 10.805 7.58333 7.58333C7.58333 4.36167 10.195 1.75 13.4167 1.75C16.6383 1.75 19.25 4.36167 19.25 7.58333Z" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <svg class="h-6 w-6" viewBox="0 0 27 30" fill="none">
+                <path d="M25.0833 28V25.0833C25.0833 23.5362 24.4687 22.0525 23.3748 20.9585C22.2808 19.8646 20.7971 19.25 19.25 19.25H7.58333C6.03624 19.25 4.55251 19.8646 3.45854 20.9585C2.36458 22.0525 1.75 23.5362 1.75 25.0833V28M19.25 7.58333C19.25 10.805 16.6383 13.4167 13.4167 13.4167C10.195 13.4167 7.58333 10.805 7.58333 7.58333C7.58333 4.36167 10.195 1.75 13.4167 1.75C16.6383 1.75 19.25 4.36167 19.25 7.58333Z"
+                    stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-        </button>
+        </a>
 
         <button
             class="flex h-10 w-10 items-center justify-center text-white/40 transition duration-200 hover:text-[#4da3ff] hover:drop-shadow-[0_0_6px_rgba(77,163,255,0.6)]"

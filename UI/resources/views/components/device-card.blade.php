@@ -12,7 +12,7 @@
     $statusColor = $isOnline ? 'bg-[#46d11f]' : 'bg-[#e32626]';
 @endphp
 
-<div class="w-[350px] rounded-[22px] border border-white/8 bg-[linear-gradient(180deg,rgba(71,82,105,0.92)_0%,rgba(43,52,73,0.94)_100%)] px-6 py-5 shadow-[0_0_45px_rgba(40,110,255,0.28)]">
+<div class="w-[350px] rounded-[22px] border border-white/8 bg-white/5 px-6 py-5 shadow-[0_0_45px_rgba(40,110,255,0.28)]">
     <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
             <div class="h-4 w-4 rounded-full {{ $statusColor }}"></div>

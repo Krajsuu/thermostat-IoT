@@ -2,7 +2,17 @@
 
 @section('content')
 
-<section class="relative min-h-screen overflow-hidden text-white">
+<section class="relative min-h-screen overflow-hidden bg-[#050816] text-white">
+    <div class="pointer-events-none absolute inset-0">
+        <div class="absolute left-[-120px] top-[120px] h-[260px] w-[260px] rounded-full bg-blue-500/10 blur-[120px]"></div>
+        <div class="absolute right-[-100px] top-[180px] h-[300px] w-[300px] rounded-full bg-blue-400/10 blur-[140px]"></div>
+        <div class="absolute left-1/2 top-[220px] h-[420px] w-[420px] -translate-x-1/2 rounded-full bg-blue-500/10 blur-[170px]"></div>
+        <div class="absolute bottom-[60px] right-[10%] h-[240px] w-[240px] rounded-full bg-orange-500/10 blur-[130px]"></div>
+
+        <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(37,99,235,0.08),transparent_55%)]"></div>
+        <div class="absolute inset-0 opacity-[0.08] [background:linear-gradient(to_right,transparent,rgba(255,255,255,0.04),transparent)] bg-[length:600px_100%]"></div>
+    </div>
+
     <div class="relative z-10">
         <div class="mx-auto flex min-h-[calc(100vh-73px)] max-w-[1440px] items-start justify-center px-4 pt-10 pb-10 sm:px-6 lg:px-10">
             <div class="relative w-full max-w-[520px]">
@@ -50,7 +60,7 @@
                             </svg>
                         </button>
 
-                        <h1 class="text-3xl font-semibold sm:text-4xl text-center">
+                        <h1 class="text-center text-3xl font-semibold tracking-wide sm:text-4xl">
                             {{ $room['name'] }}
                         </h1>
                     </div>
