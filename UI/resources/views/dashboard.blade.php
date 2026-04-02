@@ -1,51 +1,60 @@
 @extends('layouts.app')
 
 @section('content')
-    <section class="relative border-b border-white/10 py-8 text-center overflow-hidden">
-        <div class="pointer-events-none absolute inset-0 flex justify-center">
-            <div class="h-[100px] w-[300px] rounded-full bg-blue-500/20 blur-[100px]"></div>
+    <section class="relative min-h-screen overflow-hidden bg-[#050816] text-white">
+        <div class="pointer-events-none absolute inset-0">
+            <div class="absolute left-[-120px] top-[120px] h-[260px] w-[260px] rounded-full bg-blue-500/10 blur-[120px]"></div>
+            <div class="absolute right-[-100px] top-[180px] h-[300px] w-[300px] rounded-full bg-blue-400/10 blur-[140px]"></div>
+            <div class="absolute left-1/2 top-[220px] h-[420px] w-[420px] -translate-x-1/2 rounded-full bg-blue-500/10 blur-[170px]"></div>
+            <div class="absolute bottom-[60px] right-[10%] h-[240px] w-[240px] rounded-full bg-orange-500/10 blur-[130px]"></div>
+
+            <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(37,99,235,0.08),transparent_55%)]"></div>
+            <div class="absolute inset-0 opacity-[0.08] [background:linear-gradient(to_right,transparent,rgba(255,255,255,0.04),transparent)] bg-[length:600px_100%]"></div>
         </div>
 
-        <h1 class="text-3xl sm:text-5xl font-bold text-white">
-            Twoje urządzenia
-        </h1>
+        <div class="relative z-10 mx-auto w-full max-w-[1440px] px-6 py-10 lg:px-14">
 
-        <p class="mt-3 text-base sm:text-2xl text-white/60">
-            Zarządzaj ustawieniami temperatury
-        </p>
-    </section>
+            <section class="relative overflow-hidden  pb-10 pt-6 text-center">
+                <h1 class="mx-auto max-w-[900px] text-4xl font-semibold leading-tight text-white sm:text-5xl lg:text-6xl">
+                    Twoje urządzenia
+                </h1>
 
-    <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-16 px-16 py-12 justify-items-center">
-        @foreach($devices as $device)
+                <p class="mx-auto mt-4 max-w-[720px] text-base leading-7 text-slate-300 sm:text-xl">
+                    Zarządzaj ustawieniami temperatury w nowoczesnym, przejrzystym panelu.
+                </p>
+            </section>
 
-            @if($device['is_online'])
-                <a href="{{ route('control.panel', ['room' => $device['slug']]) }}"
-                class="block flex justify-center transition hover:scale-[1.02]">
-            @else
-                <div
-                    onclick="window.dispatchEvent(new CustomEvent('notify', {
-                        detail: { message: '{{ $device['name'] }} jest offline', type: 'error' }
-                    }))"
-                    class="flex justify-center opacity-60 cursor-not-allowed"
-                >
-            @endif
+            <section class="grid grid-cols-1 gap-8 px-2 py-12 md:grid-cols-2 xl:grid-cols-3">
+                @foreach($devices as $device)
 
-                <x-device-card
-                    :name="$device['name']"
-                    :status="$device['is_online'] ? 'Online' : 'Offline'"
-                    :temperature="$device['temperature']"
-                    :humidity="$device['humidity']"
-                    :mode="$device['mode']"
-                    :heating="$device['heating']"
-                />
+                    @if($device['is_online'])
+                        <a href="{{ route('control.panel', ['room' => $device['slug']]) }}"
+                           class="group block transition duration-300 hover:scale-[1.02]">
+                    @else
+                        <div
+                            onclick="window.dispatchEvent(new CustomEvent('notify', {
+                                detail: { message: '{{ $device['name'] }} jest offline', type: 'error' }
+                            }))"
+                            class="cursor-not-allowed opacity-70"
+                        >
+                    @endif
+                        <x-device-card
+                            :name="$device['name']"
+                            :status="$device['is_online'] ? 'Online' : 'Offline'"
+                            :temperature="$device['temperature']"
+                            :humidity="$device['humidity']"
+                            :mode="$device['mode']"
+                            :heating="$device['heating']"
+                        />
+                    @if($device['is_online'])
+                        </a>
+                    @else
+                        </div>
+                    @endif
 
-            @if($device['is_online'])
-                </a>
-            @else
-                </div>
-            @endif
-
-        @endforeach
+                @endforeach
+            </section>
+        </div>
     </section>
 @endsection
 
@@ -56,13 +65,11 @@
             .then(response => response.json())
             .then(data => {
                 if (data.temperature) {
-                    // Aktualizujemy temperaturę w Salonie (ID: temp-Salon)
                     const tempElement = document.getElementById('temp-Salon');
                     if (tempElement) {
                         tempElement.innerText = data.temperature.toFixed(1) + "°C";
                     }
-                    
-                    // Jeśli Twój kontroler zwraca też wilgotność (hum)
+
                     const humElement = document.getElementById('hum-Salon');
                     if (humElement && data.humidity) {
                         humElement.innerText = data.humidity + "%";
@@ -72,9 +79,7 @@
             .catch(error => console.error('Błąd pobierania danych:', error));
     }
 
-    // Uruchom od razu i powtarzaj co 5 sekund
     updateDeviceStatus();
     setInterval(updateDeviceStatus, 5000);
 </script>
 @endsection
-
