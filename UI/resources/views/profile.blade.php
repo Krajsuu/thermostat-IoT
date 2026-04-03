@@ -91,20 +91,12 @@
                                 <div>Akcja</div>
                             </div>
 
-                            @php
-                                $devices = $devices ?? [
-                                    ['room' => 'Salon', 'device_name' => 'Czujnik temperatury', 'status' => 'Online'],
-                                    ['room' => 'Pokój', 'device_name' => 'Termostat', 'status' => 'Online'],
-                                    ['room' => 'Biuro', 'device_name' => 'Czujnik temperatury', 'status' => 'Offline'],
-                                ];
-                            @endphp
-
-                            @foreach($devices as $device)
+                            @forelse($devices as $device)
                                 @php
-                                    $room = is_array($device) ? $device['room'] : $device->room;
-                                    $deviceName = is_array($device) ? $device['device_name'] : $device->device_name;
-                                    $status = is_array($device) ? $device['status'] : $device->status;
-                                    $isOnline = strtolower($status) === 'online';
+                                    $room = $device->room_name;
+                                    $deviceName = $device->name;
+                                    $isOnline = $device->is_active;
+                                    $status = $isOnline ? 'Online' : 'Offline';
                                 @endphp
 
                                 <div class="border-b border-white/10 last:border-b-0">
@@ -153,12 +145,24 @@
                         </div>
                         <h3 class="mt-6 text-xl font-semibold text-white">Dodaj nowe urządzenie</h3>
                         <div class="mt-6 rounded-[24px] border border-white/10 bg-white/5 p-5">
-                            <form method="POST" action="" class="mt-6">
+                            @if ($errors->any())
+                                <div class="mb-4 rounded-xl border border-red-400/20 bg-red-500/10 p-4 text-sm text-red-200">
+                                    <ul class="space-y-1">
+                                        @foreach ($errors->all() as $error)
+                                            <li>{{ $error }}</li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            @endif
+                            
+                            <form method="POST" action="{{ route('device.store') }}" class="mt-6">
                                 @csrf
+
                                 <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
                                     <input
                                         type="text"
                                         name="name"
+                                        value="{{ old('name') }}"
                                         placeholder="Nazwa urządzenia"
                                         class="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-slate-400 focus:border-white/30 focus:outline-none"
                                     >
@@ -166,6 +170,8 @@
                                     <input
                                         type="text"
                                         name="device_uid"
+                                        id="device_uid"
+                                        value="{{ old('device_uid') }}"
                                         placeholder="UID urządzenia"
                                         class="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-slate-400 focus:border-white/30 focus:outline-none"
                                     >
@@ -173,6 +179,7 @@
                                     <input
                                         type="text"
                                         name="room_name"
+                                        value="{{ old('room_name') }}"
                                         placeholder="Nazwa pomieszczenia"
                                         class="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-slate-400 focus:border-white/30 focus:outline-none"
                                     >
@@ -195,9 +202,19 @@
                                     </button>
                                 </div>
                             </form>
-
                             <div id="bluetooth-status" class="mt-5 text-sm text-slate-400"></div>
                         </div>
+                    </div>
+                    <div class="mt-6 text-center p-5">
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <button
+                                type="submit"
+                                class="rounded-xl border border-red-400/20 bg-red-500/10 px-6 py-3 text-sm font-medium text-red-200 transition hover:bg-red-500/20 hover:shadow-[0_0_20px_rgba(248,113,113,0.3)]"
+                            >
+                                Wyloguj się
+                            </button>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -210,6 +227,7 @@
 <script>
 async function connectBluetooth() {
     const statusBox = document.getElementById('bluetooth-status');
+    const uidInput = document.getElementById('device_uid');
 
     if (!navigator.bluetooth) {
         statusBox.innerText = 'Ta przeglądarka nie obsługuje Bluetooth.';
@@ -218,9 +236,12 @@ async function connectBluetooth() {
 
     try {
         const device = await navigator.bluetooth.requestDevice({
-            acceptAllDevices: true,
-            optionalServices: ['battery_service']
+            acceptAllDevices: true
         });
+
+        if (uidInput) {
+            uidInput.value = device.id || '';
+        }
 
         statusBox.innerText = `Połączono z urządzeniem: ${device.name || 'Nieznane urządzenie'}`;
     } catch (error) {

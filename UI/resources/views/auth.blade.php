@@ -35,29 +35,27 @@
                         Zarejestruj się, aby rozpocząć
                     </p>
 
-                    <form method="POST" action="">
+                    <form method="POST" action="{{ route('register.store') }}">
                         @csrf
 
                         <div class="mt-6 space-y-4">
-                            <input type="text" placeholder="Imię"
+                            <input name="name" type="text" placeholder="Imię"
                                 class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-slate-400 focus:border-white/30 focus:outline-none">
 
-                            <input type="email" placeholder="Adres E-mail"
+                            <input name="email" type="email" placeholder="Adres E-mail"
                                 class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-slate-400 focus:border-white/30 focus:outline-none">
 
-                            <input type="password" placeholder="Hasło"
+                            <input name="password" type="password" placeholder="Hasło"
                                 class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-slate-400 focus:border-white/30 focus:outline-none">
-
-                            <button
+                            
+                            <input name="password_confirmation" type="password" placeholder="Powtórz hasło"
+                                class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-slate-400 focus:border-white/30 focus:outline-none">
+                            
+                                <button type="submit"
                                 class="mt-4 w-full rounded-xl bg-white/10 py-3 font-semibold text-white transition hover:bg-white/20">
                                 Zarejestruj się
                             </button>
                         </div>
-
-                        <p class="mt-4 text-center text-sm text-slate-400">
-                            Masz już konto?
-                            <a href="#" class="text-white hover:underline">Zaloguj się</a>
-                        </p>
                     </form>
                 </div>
 
@@ -70,14 +68,14 @@
                         Wprowadź swoje dane
                     </p>
 
-                    <form method="POST" action="">
+                    <form method="POST" action="{{ route('login') }}">
                         @csrf
 
                         <div class="mt-6 space-y-4">
-                            <input type="email" placeholder="Adres E-mail"
+                            <input name='email' type="email" placeholder="Adres E-mail"
                                 class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-slate-400 focus:border-white/30 focus:outline-none">
 
-                            <input type="password" placeholder="Hasło"
+                            <input name='password' type="password" placeholder="Hasło"
                                 class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-slate-400 focus:border-white/30 focus:outline-none">
 
                             <button

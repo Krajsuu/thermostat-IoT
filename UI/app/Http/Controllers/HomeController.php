@@ -4,40 +4,25 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class HomeController extends Controller
 {
     public function index()
     {
-        $devices = [
-            [
-                'slug' => 'salon',
-                'name' => 'Salon',
-                'is_online' => true,
-                'temperature' => '22.4°C',
-                'humidity' => '48%',
-                'mode' => 'AUTO',
-                'heating' => 'ON',
-            ],
-            [
-                'slug' => 'pokoj',
-                'name' => 'Pokój',
-                'is_online' => true,
-                'temperature' => '25°C',
-                'humidity' => '42%',
-                'mode' => 'MANUAL',
-                'heating' => 'OFF',
-            ],
-            [
-                'slug' => 'biuro',
-                'name' => 'Biuro',
-                'is_online' => false,
-                'temperature' => '--- °C',
-                'humidity' => '---%',
-                'mode' => 'MANUAL',
-                'heating' => 'OFF',
-            ],
-        ];
+        $devices = auth()->user()->devices->map(function ($device) {
+            return [
+                'slug' => Str::slug($device->room_name),
+                'name' => $device->room_name,
+                'device_name' => $device->name,
+                'device_uid' => $device->device_uid,
+                'is_online' => $device->is_active,
+                'temperature' => $device->is_active ? 'Ładowanie...' : '--- °C',
+                'humidity' => $device->is_active ? 'Ładowanie...' : '---%',
+                'mode' => $device->is_active ? 'AUTO' : '---',
+                'heating' => $device->is_active ? 'Ładowanie...' : '---',
+            ];
+        });
 
         return view('dashboard', compact('devices'));
     }
