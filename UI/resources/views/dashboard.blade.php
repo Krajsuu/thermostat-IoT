@@ -60,23 +60,36 @@
 
 @section('scripts')
 <script>
+    const devices = @json($devices);
+
     function updateDeviceStatus() {
-        fetch('/fetch-status')
+        fetch('{{ route('fetch.status') }}')
             .then(response => response.json())
             .then(data => {
-                if (data.temperature) {
-                    const tempElement = document.getElementById('temp-Salon');
-                    if (tempElement) {
+                devices.forEach(device => {
+                    if (!device.is_online) return;
+
+                    const slug = device.slug;
+
+                    const tempElement = document.getElementById(`temp-${slug}`);
+                    if (tempElement && data.temperature !== undefined) {
                         tempElement.innerText = data.temperature.toFixed(1) + "°C";
                     }
 
-                    const humElement = document.getElementById('hum-Salon');
-                    if (humElement && data.humidity) {
+                    const humElement = document.getElementById(`hum-${slug}`);
+                    if (humElement && data.humidity !== undefined) {
                         humElement.innerText = data.humidity + "%";
                     }
-                }
+
+                    const heatElement = document.getElementById(`heat-${slug}`);
+                    if (heatElement && data.heater !== undefined) {
+                        heatElement.innerText = data.heater;
+                    }
+                });
             })
-            .catch(error => console.error('Błąd pobierania danych:', error));
+            .catch(error => {
+                console.error('Błąd pobierania danych:', error);
+            });
     }
 
     updateDeviceStatus();
