@@ -22,4 +22,4 @@ Route::post('/devices', [DeviceController::class, 'store'])->name('device.store'
 Route::get('/dashboard', [HomeController::class, 'index'])->name('dashboard');
 
 Route::get('/control-panel/{room}', [ControlPanelController::class, 'index'])->name('control.panel');
-Route::get('/fetch-status', [InfluxController::class, 'getLatestData']);
+Route::get('/fetch-status', [InfluxController::class, 'getLatestData'])->name('fetch.status');
