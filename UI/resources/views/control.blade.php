@@ -20,7 +20,7 @@
 
                 <div
                     x-data="{
-                        temperature: {{ $temperature }},
+                        temperature: {{ $room['is_online'] ? $temperature : 0 }},
                         activeMode: null,
 
                         historyOpen: false,
@@ -67,7 +67,9 @@
 
                     <div class="mt-5">
                         <p class="text-sm text-white/55 sm:text-base">Aktualna temperatura</p>
-                        <p class="text-5xl font-bold tracking-tight sm:text-6xl"> {{$temperature}}°C </p>
+                        <p id="control-temperature" class="text-5xl font-bold tracking-tight sm:text-6xl">
+                            {{ $room['is_online'] ? $temperature . '°C' : '--- °C' }}
+                        </p>
                     </div>
 
                     <div class="mt-7">
@@ -103,7 +105,9 @@
                         </div>
                     </div>
 
-                    <p class="mt-4 text-xl text-white/70">Wilgotność {{ $humidity }}%</p>
+                    <p id="control-humidity" class="mt-4 text-xl text-white/70">
+                        Wilgotność {{ $room['is_online'] ? $humidity . '%' : '---%' }}
+                    </p>
 
                     <div class="mt-6 space-y-3 text-left">
                         <x-mode-toggle label="Ogrzewanie" mode="heating">
@@ -187,5 +191,30 @@
         </div>
     </div>
 </section>
+
+@section('scripts')
+<script>
+    function updateControlData() {
+        fetch('{{ route('fetch.status') }}')
+            .then(response => response.json())
+            .then(data => {
+                const tempElement = document.getElementById('control-temperature');
+                const humElement = document.getElementById('control-humidity');
+
+                if (tempElement && data.temperature !== undefined) {
+                    tempElement.innerText = data.temperature.toFixed(1) + "°C";
+                }
+
+                if (humElement && data.humidity !== undefined) {
+                    humElement.innerText = "Wilgotność " + data.humidity + "%";
+                }
+            })
+            .catch(error => console.error('Błąd pobierania danych:', error));
+    }
+
+    updateControlData();
+    setInterval(updateControlData, 5000);
+</script>
+@endsection
 
 @endsection
