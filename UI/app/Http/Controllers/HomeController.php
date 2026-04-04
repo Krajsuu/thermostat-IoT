@@ -17,10 +17,10 @@ class HomeController extends Controller
                 'device_name' => $device->name,
                 'device_uid' => $device->device_uid,
                 'is_online' => $device->is_active,
-                'temperature' => $device->is_active ? 'Ładowanie...' : '--- °C',
-                'humidity' => $device->is_active ? 'Ładowanie...' : '---%',
-                'mode' => $device->is_active ? 'AUTO' : '---',
-                'heating' => $device->is_active ? 'Ładowanie...' : '---',
+                'temperature' => $device->is_active ? 'Ładowanie' : '--- °C',
+                'humidity' => $device->is_active ? 'Ładowanie' : '---%',
+                'mode' => $device->is_active ? 'Ładowanie' : '---',
+                'heating' => $device->is_active ? 'Ładowanie' : '---',
             ];
         });
 

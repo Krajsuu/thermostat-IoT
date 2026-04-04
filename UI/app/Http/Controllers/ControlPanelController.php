@@ -2,43 +2,35 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Device;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class ControlPanelController extends Controller
 {
     public function index(string $room)
     {
-        $rooms = [
-            'salon' => [
-                'name' => 'Salon',
-                'is_online' => true,
-                'temperature' => 22.4,
-                'humidity' => 48,
-            ],
-            'pokoj' => [
-                'name' => 'Pokój',
-                'is_online' => true,
-                'temperature' => 25.0,
-                'humidity' => 42,
-            ],
-            'biuro' => [
-                'name' => 'Biuro',
-                'is_online' => false,
-                'temperature' => null,
-                'humidity' => null,
-            ],
-        ];
+        $device = auth()->user()->devices->first(function ($device) use ($room) {
+            return Str::slug($device->room_name) === $room;
+        });
 
-        abort_unless(isset($rooms[$room]), 404);
+        abort_unless($device, 404);
 
-        if (!$rooms[$room]['is_online']) {
+        if (!$device->is_active) {
             return redirect()->route('dashboard');
         }
 
         return view('control', [
-            'room' => $rooms[$room],
-            'temperature' => $rooms[$room]['temperature'] ?? 0,
-            'humidity' => $rooms[$room]['humidity'] ?? 0,
+            'room' => [
+                'name' => $device->room_name,
+                'is_online' => $device->is_active,
+                'temperature' => 0,
+                'humidity' => 0,
+                'device_uid' => $device->device_uid,
+                'device_name' => $device->name,
+            ],
+            'temperature' => 0,
+            'humidity' => 0,
 
             'historyPoints' => [
                 ['label' => '10:00', 'temp' => 22.1],
@@ -49,9 +41,9 @@ class ControlPanelController extends Controller
             ],
 
             'historyPoints24h' => [
-                ['label' => '1:00', 'temp' => 13,4],
-                ['label' => '3:00', 'temp' => 13,4],
-                ['label' => '5:00', 'temp' => 13,4],
+                ['label' => '1:00', 'temp' => 13.4],
+                ['label' => '3:00', 'temp' => 13.4],
+                ['label' => '5:00', 'temp' => 13.4],
                 ['label' => '7:00', 'temp' => 17.0],
                 ['label' => '9:00', 'temp' => 20.8],
                 ['label' => '11:00', 'temp' => 21.8],

@@ -48,7 +48,7 @@
                                 <input
                                     type="text"
                                     name="name"
-                                    value="{{ auth()->user()->name ?? 'Jan Kowalski' }}"
+                                    value="{{ auth()->user()->name }}"
                                     class="w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-lg text-white placeholder:text-slate-400 focus:border-white/30 focus:outline-none"
                                     placeholder="Imię i nazwisko"
                                 >
@@ -56,7 +56,7 @@
                                 <input
                                     type="email"
                                     name="email"
-                                    value="{{ auth()->user()->email ?? 'jan.kowalski@email.com' }}"
+                                    value="{{ auth()->user()->email }}"
                                     class="w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-lg text-white placeholder:text-slate-400 focus:border-white/30 focus:outline-none"
                                     placeholder="Adres e-mail"
                                 >
@@ -154,7 +154,7 @@
                                     </ul>
                                 </div>
                             @endif
-                            
+
                             <form method="POST" action="{{ route('device.store') }}" class="mt-6">
                                 @csrf
 
