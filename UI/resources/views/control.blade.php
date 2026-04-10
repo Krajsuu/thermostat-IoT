@@ -20,29 +20,49 @@
 
                 <div
                     x-data="{
-                        temperature: {{ $room['is_online'] ? $temperature : 0 }},
-                        activeMode: null,
+                        temperature: {{ $temperature ?? 21 }},
+                        activeMode: '{{ $room['state_name'] ?? 'auto' }}', // Stan zaciągnięty z serwera
+                        deviceUid: '{{ $room['device_uid'] }}',
 
-                        historyOpen: false,
-                        historyTab: '24h',
+                        // Funkcja wysyłająca komendę do Laravela
+                        async sendCommand(mode, targetTemp = null) {
+                            const modeMap = { 'heating': 1, 'cooling': 2, 'auto': 3 };
+                            const payload = {
+                                device_uid: this.deviceUid,
+                                state: modeMap[mode],
+                                target: targetTemp ?? this.temperature
+                            };
+
+                            try {
+                                const response = await fetch('{{ route('device.command') }}', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                    },
+                                    body: JSON.stringify(payload)
+                                });
+                                const result = await response.json();
+                                console.log('MQTT Status:', result.status);
+                            } catch (error) {
+                                console.error('Błąd sterowania:', error);
+                            }
+                        },
 
                         setMode(mode) {
-                            if (mode === 'auto') {
-                                this.activeMode = this.activeMode === 'auto' ? null : 'auto'
-                                return
+                            // Logika przełączania stanów
+                            if (this.activeMode === mode) {
+                                this.activeMode = 'auto'; // Jeśli klikniesz aktywny, wróć do auto
+                            } else {
+                                this.activeMode = mode;
                             }
-
-                            if (this.activeMode === 'auto') {
-                                return
-                            }
-
-                            this.activeMode = this.activeMode === mode ? null : mode
+                            
+                            this.sendCommand(this.activeMode);
                         },
 
                         isAuto() {
-                            return this.activeMode === 'auto'
+                            return this.activeMode === 'auto';
                         },
-
                         tabClass(tab) {
                             return this.historyTab === tab
                                 ? 'rounded-full bg-blue-500/15 px-6 py-2 text-2xl font-medium text-blue-300 shadow-[0_0_20px_rgba(59,130,246,0.18)] transition'
@@ -93,8 +113,9 @@
                                     max="30"
                                     step="0.1"
                                     x-model.number="temperature"
-                                    :disabled="!isAuto()"
-                                    class="temperature-slider w-full appearance-none bg-transparent disabled:opacity-40 disabled:cursor-not-allowed"
+                                    x-on:change="sendCommand('auto', temperature)" 
+                                    :disabled="activeMode !== 'auto'"
+                                    class="temperature-slider ..."
                                 >
                             </div>
 
@@ -191,11 +212,12 @@
         </div>
     </div>
 </section>
+@endsection
 
 @section('scripts')
 <script>
     function updateControlData() {
-        fetch('{{ route('fetch.status') }}')
+        fetch('{{ route('fetch.status', ['device_uid' => $room['device_uid']]) }}')
             .then(response => response.json())
             .then(data => {
                 const tempElement = document.getElementById('control-temperature');
@@ -215,6 +237,4 @@
     updateControlData();
     setInterval(updateControlData, 5000);
 </script>
-@endsection
-
 @endsection

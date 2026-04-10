@@ -63,32 +63,37 @@
     const devices = @json($devices);
 
     function updateDeviceStatus() {
-        fetch('{{ route('fetch.status') }}')
-            .then(response => response.json())
-            .then(data => {
-                devices.forEach(device => {
-                    if (!device.is_online) return;
+        devices.forEach(device => {
+            if (!device.is_online) return;
 
+            fetch(`/fetch-status/${encodeURIComponent(device.device_uid)}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
                     const slug = device.slug;
 
                     const tempElement = document.getElementById(`temp-${slug}`);
                     if (tempElement && data.temperature !== undefined) {
-                        tempElement.innerText = data.temperature.toFixed(1) + "°C";
+                        tempElement.innerText = `${Number(data.temperature).toFixed(1)}°C`;
                     }
 
                     const humElement = document.getElementById(`hum-${slug}`);
                     if (humElement && data.humidity !== undefined) {
-                        humElement.innerText = data.humidity + "%";
+                        humElement.innerText = `${data.humidity}%`;
                     }
 
                     const heatElement = document.getElementById(`heat-${slug}`);
                     if (heatElement && data.heater !== undefined) {
                         heatElement.innerText = data.heater;
                     }
+                })
+                .catch(error => {
+                    console.error(`Błąd pobierania danych dla ${device.device_uid}:`, error);
                 });
-            })
-            .catch(error => {
-                console.error('Błąd pobierania danych:', error);
             });
     }
 
