@@ -18,19 +18,42 @@
             <div class="relative w-full max-w-[520px]">
                 <div class="absolute left-1/2 top-[20%] h-[420px] w-[420px] -translate-x-1/2 rounded-full bg-blue-500/20 blur-[120px]"></div>
 
+                @php
+                    $sliderInit = 21.0;
+                    if (!empty($room['is_online'])) {
+                        $t = isset($temperature) ? (float) $temperature : 21.0;
+                        if ($t <= 0) {
+                            $t = 21.0;
+                        }
+                        $sliderInit = max(10.0, min(30.0, $t));
+                    }
+                @endphp
                 <div
+                    id="control-panel-root"
                     x-data="{
-                        temperature: {{ $temperature ?? 21 }},
-                        activeMode: '{{ $room['state_name'] ?? 'auto' }}', // Stan zaciągnięty z serwera
+                        temperature: {{ number_format($sliderInit, 1, '.', '') }},
+                        activeMode: '{{ $room['state_name'] ?? 'auto' }}',
                         deviceUid: '{{ $room['device_uid'] }}',
+                        historyOpen: false,
+                        historyTab: '24h',
 
-                        // Funkcja wysyłająca komendę do Laravela
+                        thumbLeftPct() {
+                            const t = Math.min(30, Math.max(10, Number(this.temperature) || 21));
+                            return ((t - 10) / 20) * 100;
+                        },
+
                         async sendCommand(mode, targetTemp = null) {
                             const modeMap = { 'heating': 1, 'cooling': 2, 'auto': 3 };
+                            const state = modeMap[mode];
+                            if (state === undefined) {
+                                return;
+                            }
+                            const rawTarget = targetTemp ?? this.temperature;
+                            const target = Math.min(30, Math.max(10, Number(rawTarget) || 21));
                             const payload = {
                                 device_uid: this.deviceUid,
-                                state: modeMap[mode],
-                                target: targetTemp ?? this.temperature
+                                state,
+                                target
                             };
 
                             try {
@@ -38,12 +61,17 @@
                                     method: 'POST',
                                     headers: {
                                         'Content-Type': 'application/json',
-                                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                        'Accept': 'application/json'
                                     },
                                     body: JSON.stringify(payload)
                                 });
-                                const result = await response.json();
-                                console.log('MQTT Status:', result.status);
+                                const body = await response.json().catch(() => ({}));
+                                if (!response.ok) {
+                                    console.error('Sterowanie:', response.status, body);
+                                    return;
+                                }
+                                console.log('MQTT Status:', body.status ?? body);
                             } catch (error) {
                                 console.error('Błąd sterowania:', error);
                             }
@@ -102,7 +130,7 @@
                                 <div
                                     class="absolute top-[-40px] -translate-x-1/2 text-sm font-medium text-white bg-blue-500/20 px-3 py-1 rounded-lg backdrop-blur shadow-[0_0_10px_rgba(59,130,246,0.5)] transition"
                                     :class="isAuto() ? 'opacity-100' : 'opacity-40'"
-                                    :style="`left: ${((temperature - 10) / 20) * 100}%`"
+                                    :style="`left: ${thumbLeftPct()}%`"
                                 >
                                     <span x-text="temperature.toFixed(1)"></span>°C
                                 </div>
@@ -113,9 +141,9 @@
                                     max="30"
                                     step="0.1"
                                     x-model.number="temperature"
-                                    x-on:change="sendCommand('auto', temperature)" 
+                                    x-on:change="sendCommand('auto', temperature)"
                                     :disabled="activeMode !== 'auto'"
-                                    class="temperature-slider ..."
+                                    class="temperature-slider w-full appearance-none bg-transparent disabled:cursor-not-allowed disabled:opacity-40"
                                 >
                             </div>
 
@@ -217,18 +245,50 @@
 @section('scripts')
 <script>
     function updateControlData() {
-        fetch('{{ route('fetch.status', ['device_uid' => $room['device_uid']]) }}')
-            .then(response => response.json())
+        fetch('{{ route('fetch.status', ['device_uid' => $room['device_uid']]) }}', {
+            headers: { 'Accept': 'application/json' }
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('HTTP ' + response.status);
+                }
+                return response.json();
+            })
             .then(data => {
+                const root = document.getElementById('control-panel-root');
+
                 const tempElement = document.getElementById('control-temperature');
                 const humElement = document.getElementById('control-humidity');
 
                 if (tempElement && data.temperature !== undefined) {
-                    tempElement.innerText = data.temperature.toFixed(1) + "°C";
+                    tempElement.innerText = Number(data.temperature).toFixed(1) + "°C";
                 }
 
                 if (humElement && data.humidity !== undefined) {
                     humElement.innerText = "Wilgotność " + data.humidity + "%";
+                }
+
+                if (root && typeof Alpine !== 'undefined' && Alpine.$data) {
+                    try {
+                        const ax = Alpine.$data(root);
+                        if (ax) {
+                            if (data.target !== undefined && data.target !== null) {
+                                const tgt = Number(data.target);
+                                if (!Number.isNaN(tgt)) {
+                                    ax.temperature = Math.min(30, Math.max(10, tgt));
+                                }
+                            }
+                            if (data.state !== undefined && data.state !== null) {
+                                const modes = { 1: 'heating', 2: 'cooling', 3: 'auto' };
+                                const m = modes[Number(data.state)];
+                                if (m) {
+                                    ax.activeMode = m;
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        /* Alpine jeszcze nie zainicjalizował komponentu */
+                    }
                 }
             })
             .catch(error => console.error('Błąd pobierania danych:', error));
