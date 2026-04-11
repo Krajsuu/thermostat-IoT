@@ -1,4 +1,5 @@
 @props([
+    'slug',
     'name',
     'status',
     'temperature',
@@ -24,11 +25,11 @@
     <div class="mt-5 h-px bg-white/12"></div>
 
     <div class="pt-10 text-center">
-    <div id="temp-{{ $name }}" class="text-[60px] font-bold tracking-wide text-white">
+    <div id="temp-{{ $slug }}" class="text-[60px] font-bold tracking-wide text-white">
         {{ $temperature }}
     </div>
     <div class="mt-5 text-[24px] text-white">
-        Wilgotność : <span id="hum-{{ $name }}">{{ $humidity }}</span>
+        Wilgotność : <span id="hum-{{ $slug }}">{{ $humidity }}</span>
     </div>
 </div>
 
@@ -36,10 +37,10 @@
 
     <div class="mt-4 flex items-center justify-between text-[18px] font-semibold">
         <div class="text-white">
-            Tryb : <span class="text-[#00d1ff]">{{ $mode }}</span>
+            Tryb : <span id="mode-{{ $slug }}" class="text-[#00d1ff]">{{ $mode }}</span>
         </div>
         <div class="text-white">
-            Grzanie : <span class="text-[#ffc400]">{{ $heating }}</span>
+            Grzanie : <span id="heat-{{ $slug }}" class="text-[#ffc400]">{{ $heating }}</span>
         </div>
     </div>
 </div>

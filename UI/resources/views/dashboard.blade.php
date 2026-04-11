@@ -39,6 +39,7 @@
                         >
                     @endif
                         <x-device-card
+                            :slug="$device['slug']"
                             :name="$device['name']"
                             :status="$device['is_online'] ? 'Online' : 'Offline'"
                             :temperature="$device['temperature']"
@@ -89,6 +90,15 @@
                     const heatElement = document.getElementById(`heat-${slug}`);
                     if (heatElement && data.heater !== undefined) {
                         heatElement.innerText = data.heater;
+                    }
+
+                    const modeElement = document.getElementById(`mode-${slug}`);
+                    if (modeElement && data.state !== undefined && data.state !== null) {
+                        const modeLabels = { 1: 'Ogrzewanie', 2: 'Chłodzenie', 3: 'Auto' };
+                        const label = modeLabels[Number(data.state)];
+                        if (label) {
+                            modeElement.innerText = label;
+                        }
                     }
                 })
                 .catch(error => {
