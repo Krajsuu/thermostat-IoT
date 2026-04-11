@@ -11,9 +11,11 @@
         activeMode === '{{ $mode }}'
             ? 'border-blue-400/30 bg-white/8 shadow-[0_0_20px_rgba(59,130,246,0.10)]'
             : 'border-white/10 bg-white/5 hover:bg-white/15',
-        activeMode === 'auto' && '{{ $mode }}' !== 'auto'
-            ? 'opacity-55'
-            : 'opacity-100'
+        activeMode === 'monitor'
+            ? 'opacity-70'
+            : (activeMode === 'auto' && '{{ $mode }}' !== 'auto'
+                ? 'opacity-55'
+                : 'opacity-100')
     ]"
 >
     <div class="flex items-center gap-3">

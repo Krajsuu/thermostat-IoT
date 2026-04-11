@@ -44,7 +44,7 @@
                         },
 
                         async sendCommand(mode, targetTemp = null) {
-                            const modeMap = { 'heating': 1, 'cooling': 2, 'auto': 3 };
+                            const modeMap = { 'heating': 1, 'cooling': 2, 'auto': 3, 'monitor': 4 };
                             const state = modeMap[mode];
                             if (state === undefined) {
                                 return;
@@ -80,13 +80,11 @@
                         },
 
                         setMode(mode) {
-                            // Logika przełączania stanów
                             if (this.activeMode === mode) {
-                                this.activeMode = 'auto'; // Jeśli klikniesz aktywny, wróć do auto
+                                this.activeMode = 'monitor';
                             } else {
                                 this.activeMode = mode;
                             }
-                            
                             this.sendCommand(this.activeMode);
                         },
 
@@ -217,6 +215,10 @@
                                 <path d="M16.5 8.9375C11.9625 8.9375 8.25 12.65 8.25 17.1875C8.25 21.725 11.9625 25.4375 16.5 25.4375C21.0375 25.4375 24.75 21.725 24.75 17.1875C24.75 12.65 21.0375 8.9375 16.5 8.9375ZM16.5 20.625C14.575 20.625 13.0625 19.1125 13.0625 17.1875C13.0625 15.2625 14.575 13.75 16.5 13.75C18.425 13.75 19.9375 15.2625 19.9375 17.1875C19.9375 19.1125 18.425 20.625 16.5 20.625Z" fill="#455A64"/>
                             </svg>
                         </x-mode-toggle>
+
+                        <p class="mt-3 text-center text-xs text-white/45">
+                            Kliknij ponownie aktywny tryb, aby wyłączyć wszystkie — urządzenie tylko mierzy i wysyła dane.
+                        </p>
                     </div>
 
                     <div class="mt-8">
@@ -283,7 +285,7 @@
                                     }
                                 }
                                 if (data.state !== undefined && data.state !== null) {
-                                    const modes = { 1: 'heating', 2: 'cooling', 3: 'auto' };
+                                    const modes = { 1: 'heating', 2: 'cooling', 3: 'auto', 4: 'monitor' };
                                     const m = modes[Number(data.state)];
                                     if (m) {
                                         ax.activeMode = m;

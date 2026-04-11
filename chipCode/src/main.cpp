@@ -12,20 +12,21 @@
 #include <PubSubClient.h>
 #include <Preferences.h>
 
-// Definicja stanów
+// Definicja stanów (zgodnie z panelem WWW: 1–3 sterowanie, 4 = tylko pomiar MQTT)
 enum state {
   HEATING = 1,
   COOLING = 2,
-  AUTO = 3
+  AUTO = 3,
+  SENSOR_ONLY = 4
 };
 
 Preferences preferences;
 String deviceID;      
 float targetTemp = 21.0; 
-state devState = AUTO; // Domyślnie tryb automatyczny
+state devState = SENSOR_ONLY; // Domyślnie tryb automatyczny
 
 // KONFIGURACJA IDENTYFIKACJI
-const char* userId = "user_1"; // Tu wpisz swoje ID (później pobierane np. przez Bluetooth)
+const char* userId = "user_1"; // Tu ID później pobierane przez Bluetooth
 
 // Dynamiczne tematy MQTT
 char publishTopic[128];
@@ -51,8 +52,8 @@ char subscribeTopic[128];
 #define YELLOW  0xFFE0
 #define GRAY    0x7BEF 
 
-const char* WIFI_SSID = "TWOJE_SSID";
-const char* WIFI_PASS = "TWOJE_HASLO";
+const char* WIFI_SSID = "";
+const char* WIFI_PASS = "";
 
 Adafruit_AHTX0 aht;
 Adafruit_SSD1331 display = Adafruit_SSD1331(CS_PIN, DC_PIN, MOSI_PIN, SCLK_PIN, RST_PIN);
@@ -74,16 +75,17 @@ void callback(char* topic, byte* payload, unsigned int length) {
         return;
     }
 
-    // 1. Obsługa zmiany stanu (HEATING/COOLING/AUTO)
+    // 1. Obsługa zmiany stanu (HEATING/COOLING/AUTO/SENSOR_ONLY)
     if (doc.containsKey("state")) {
         int newState = doc["state"];
-        devState = (state)newState;
-        Serial.print("Zmiana trybu na: "); Serial.println(newState);
-        
-        // Zapisz tryb w pamięci, aby po restarcie ESP pamiętało stan
-        preferences.begin("thermio", false);
-        preferences.putInt("devState", (int)devState);
-        preferences.end();
+        if (newState >= (int)HEATING && newState <= (int)SENSOR_ONLY) {
+            devState = (state)newState;
+            Serial.print("Zmiana trybu na: "); Serial.println(newState);
+
+            preferences.begin("thermio", false);
+            preferences.putInt("devState", (int)devState);
+            preferences.end();
+        }
     }
 
     // 2. Obsługa nowej temperatury zadanej (tylko jeśli tryb AUTO)
@@ -150,7 +152,12 @@ void setup() {
     // Odczyt ustawień z pamięci
     preferences.begin("thermio", false);
     targetTemp = preferences.getFloat("target", 21.0);
-    devState = (state)preferences.getInt("devState", (int)AUTO);
+    int storedState = preferences.getInt("devState", (int)AUTO);
+    if (storedState >= (int)HEATING && storedState <= (int)SENSOR_ONLY) {
+        devState = (state)storedState;
+    } else {
+        devState = AUTO;
+    }
     preferences.end();
 
     pinMode(RELAY_HEATER, OUTPUT);
@@ -184,35 +191,41 @@ void loop() {
     if (devState == HEATING) {
         digitalWrite(RELAY_HEATER, LOW);  // Wymuś grzanie
         digitalWrite(RELAY_FAN, LOW);     // Wiatrak OFF
-    } 
+    }
     else if (devState == COOLING) {
         digitalWrite(RELAY_HEATER, HIGH); // Grzałka OFF
         digitalWrite(RELAY_FAN, HIGH);    // Wymuś wiatrak
-    } 
-    else { // Tryb AUTO (Zależny od temperatury)
+    }
+    else if (devState == SENSOR_ONLY) {
+        digitalWrite(RELAY_HEATER, HIGH); // Brak sterowania — stany bezczynne
+        digitalWrite(RELAY_FAN, LOW);
+    }
+    else { // AUTO (zależny od temperatury)
         if (tempC < targetTemp - 0.5) {
-            digitalWrite(RELAY_HEATER, LOW);  
-            digitalWrite(RELAY_FAN, LOW);     
+            digitalWrite(RELAY_HEATER, LOW);
+            digitalWrite(RELAY_FAN, LOW);
         } else if (tempC > targetTemp + 0.5) {
-            digitalWrite(RELAY_HEATER, HIGH); 
-            digitalWrite(RELAY_FAN, HIGH);    
+            digitalWrite(RELAY_HEATER, HIGH);
+            digitalWrite(RELAY_FAN, HIGH);
         } else {
-            digitalWrite(RELAY_HEATER, HIGH); 
+            digitalWrite(RELAY_HEATER, HIGH);
             digitalWrite(RELAY_FAN, LOW);
         }
     }
 
-    // Obsługa joysticka (tylko zmiana targetu w trybie AUTO dla wygody)
-    int rawY = analogRead(JOY_Y_PIN);
-    static unsigned long lastJoy = 0;
-    if (millis() - lastJoy > 200) {
-        if (rawY < 500) targetTemp += 0.5;
-        if (rawY > 3500) targetTemp -= 0.5;
-        if (rawY < 500 || rawY > 3500) {
-            lastJoy = millis();
-            preferences.begin("thermio", false);
-            preferences.putFloat("target", targetTemp);
-            preferences.end();
+    // Obsługa joysticka (tylko w trybie AUTO)
+    if (devState == AUTO) {
+        int rawY = analogRead(JOY_Y_PIN);
+        static unsigned long lastJoy = 0;
+        if (millis() - lastJoy > 200) {
+            if (rawY < 500) targetTemp += 0.5;
+            if (rawY > 3500) targetTemp -= 0.5;
+            if (rawY < 500 || rawY > 3500) {
+                lastJoy = millis();
+                preferences.begin("thermio", false);
+                preferences.putFloat("target", targetTemp);
+                preferences.end();
+            }
         }
     }
 
@@ -235,8 +248,12 @@ void loop() {
         display.print("MODE: AUTO ("); display.print(targetTemp, 1); display.print(")");
     } else if (devState == HEATING) {
         display.print("MODE: HEATING   ");
-    } else {
+    } else if (devState == COOLING) {
         display.print("MODE: COOLING   ");
+    } else if (devState == SENSOR_ONLY) {
+        display.print("MODE: SENSOR    ");
+    } else {
+        display.print("MODE: ?         ");
     }
 
     display.setCursor(0, 25);

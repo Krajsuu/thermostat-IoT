@@ -12,7 +12,7 @@ class DeviceCommandController extends Controller
     {
         $request->validate([
             'device_uid' => 'required|string',
-            'state' => 'required|integer|in:1,2,3',
+            'state' => 'required|integer|in:1,2,3,4',
             'target' => 'nullable|numeric|between:10,30',
         ]);
 

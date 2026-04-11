@@ -94,7 +94,7 @@
 
                     const modeElement = document.getElementById(`mode-${slug}`);
                     if (modeElement && data.state !== undefined && data.state !== null) {
-                        const modeLabels = { 1: 'Ogrzewanie', 2: 'Chłodzenie', 3: 'Auto' };
+                        const modeLabels = { 1: 'Ogrzewanie', 2: 'Chłodzenie', 3: 'Auto', 4: 'Tylko pomiar' };
                         const label = modeLabels[Number(data.state)];
                         if (label) {
                             modeElement.innerText = label;
