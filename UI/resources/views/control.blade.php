@@ -36,6 +36,7 @@
                         deviceUid: '{{ $room['device_uid'] }}',
                         historyOpen: false,
                         historyTab: '24h',
+                        commandCooldownUntil: 0,
 
                         thumbLeftPct() {
                             const t = Math.min(30, Math.max(10, Number(this.temperature) || 21));
@@ -71,6 +72,7 @@
                                     console.error('Sterowanie:', response.status, body);
                                     return;
                                 }
+                                this.commandCooldownUntil = Date.now() + 3000;
                                 console.log('MQTT Status:', body.status ?? body);
                             } catch (error) {
                                 console.error('Błąd sterowania:', error);
@@ -272,17 +274,20 @@
                     try {
                         const ax = Alpine.$data(root);
                         if (ax) {
-                            if (data.target !== undefined && data.target !== null) {
-                                const tgt = Number(data.target);
-                                if (!Number.isNaN(tgt)) {
-                                    ax.temperature = Math.min(30, Math.max(10, tgt));
+                            const inCooldown = ax.commandCooldownUntil && Date.now() < ax.commandCooldownUntil;
+                            if (!inCooldown) {
+                                if (data.target !== undefined && data.target !== null) {
+                                    const tgt = Number(data.target);
+                                    if (!Number.isNaN(tgt)) {
+                                        ax.temperature = Math.min(30, Math.max(10, tgt));
+                                    }
                                 }
-                            }
-                            if (data.state !== undefined && data.state !== null) {
-                                const modes = { 1: 'heating', 2: 'cooling', 3: 'auto' };
-                                const m = modes[Number(data.state)];
-                                if (m) {
-                                    ax.activeMode = m;
+                                if (data.state !== undefined && data.state !== null) {
+                                    const modes = { 1: 'heating', 2: 'cooling', 3: 'auto' };
+                                    const m = modes[Number(data.state)];
+                                    if (m) {
+                                        ax.activeMode = m;
+                                    }
                                 }
                             }
                         }
