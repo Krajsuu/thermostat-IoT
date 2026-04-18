@@ -63,6 +63,20 @@
 <script>
     const devices = @json($devices);
 
+    function formatDashboardMode(state) {
+        const n = Number(state);
+        if (n === 3) {
+            return 'Auto';
+        }
+        if ([1, 2].includes(n)) {
+            return 'Manual';
+        }
+        if (n === 4) {
+            return 'Sensor Only';
+        }
+        return 'brak';
+    }
+
     function updateDeviceStatus() {
         devices.forEach(device => {
             if (!device.is_online) return;
@@ -93,12 +107,8 @@
                     }
 
                     const modeElement = document.getElementById(`mode-${slug}`);
-                    if (modeElement && data.state !== undefined && data.state !== null) {
-                        const modeLabels = { 1: 'Ogrzewanie', 2: 'Chłodzenie', 3: 'Auto', 4: 'Tylko pomiar' };
-                        const label = modeLabels[Number(data.state)];
-                        if (label) {
-                            modeElement.innerText = label;
-                        }
+                    if (modeElement) {
+                        modeElement.innerText = formatDashboardMode(data.state);
                     }
                 })
                 .catch(error => {

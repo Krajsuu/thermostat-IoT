@@ -19,7 +19,7 @@ class HomeController extends Controller
                 'is_online' => $device->is_active,
                 'temperature' => $device->is_active ? 'Ładowanie' : '--- °C',
                 'humidity' => $device->is_active ? 'Ładowanie' : '---%',
-                'mode' => $device->is_active ? 'Ładowanie' : '---',
+                'mode' => $device->is_active ? 'Ładowanie' : 'brak',
                 'heating' => $device->is_active ? 'Ładowanie' : '---',
             ];
         });

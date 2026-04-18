@@ -44,7 +44,9 @@ export function buildThermioHistorySvg(points, height, uniqueId) {
 
     const { minT, maxT } = normalizeTempRange(temps);
     const plotLeft = 54;
-    const plotRight = 392;
+    // Zapas po prawej: etykiety osi X mają text-anchor="middle", żeby nie obcinało ostatniej godziny.
+    const plotRight = 376;
+    const svgWidth = 400;
     const bottomY = h - 22;
     const topY = 18;
     const labelY = h - 4;
@@ -94,7 +96,7 @@ export function buildThermioHistorySvg(points, height, uniqueId) {
         circEls += `<circle cx="${c.x}" cy="${c.y}" r="3" fill="#dbeafe"/>`;
     });
 
-    return `<svg viewBox="0 0 400 ${h}" class="w-full" xmlns="http://www.w3.org/2000/svg"><defs><filter id="glow-${uid}"><feGaussianBlur stdDeviation="3.5" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>${gridLines}${xAxisLine}${yAxisLine}${yTexts}${unitLabel}<path d="${pathD}" fill="none" stroke="#7dd3fc" stroke-width="2" filter="url(#glow-${uid})"/>${circEls}${xLabels}</svg>`;
+    return `<svg viewBox="0 0 ${svgWidth} ${h}" class="w-full" xmlns="http://www.w3.org/2000/svg"><defs><filter id="glow-${uid}"><feGaussianBlur stdDeviation="3.5" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>${gridLines}${xAxisLine}${yAxisLine}${yTexts}${unitLabel}<path d="${pathD}" fill="none" stroke="#7dd3fc" stroke-width="2" filter="url(#glow-${uid})"/>${circEls}${xLabels}</svg>`;
 }
 
 export function statMin(points) {
