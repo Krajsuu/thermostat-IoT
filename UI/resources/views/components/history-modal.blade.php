@@ -2,6 +2,7 @@
     'historyPoints24h' => [],
     'historyPoints7d' => [],
     'historyPoints30d' => [],
+    'historyLastUpdated' => null,
 ])
 
 @php
@@ -157,7 +158,7 @@
             </div>
 
             <p class="mt-6 text-center text-2xl font-medium text-white/65">
-                Ostatnia aktualizacja: 11:45
+                Ostatnia aktualizacja: {{ $historyLastUpdated ?? '—' }}
             </p>
         </div>
     </div>

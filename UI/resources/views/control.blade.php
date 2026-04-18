@@ -238,6 +238,7 @@
                         :historyPoints24h="$historyPoints24h"
                         :historyPoints7d="$historyPoints7d"
                         :historyPoints30d="$historyPoints30d"
+                        :historyLastUpdated="$historyLastUpdated ?? null"
                     />
                 </div>
             </div>
