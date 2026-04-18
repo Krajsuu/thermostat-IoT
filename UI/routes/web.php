@@ -25,5 +25,6 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/control-panel/{room}', [ControlPanelController::class, 'index'])->name('control.panel');
     Route::get('/fetch-status/{device_uid}', [InfluxController::class, 'getLatestData'])->name('fetch.status');
+    Route::get('/fetch-history/{device_uid}', [InfluxController::class, 'getHistoryData'])->name('fetch.history');
     Route::post('/device/command', [DeviceCommandController::class, 'send'])->name('device.command');
 });

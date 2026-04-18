@@ -1,28 +1,3 @@
-@props([
-    'historyPoints24h' => [],
-    'historyPoints7d' => [],
-    'historyPoints30d' => [],
-    'historyLastUpdated' => null,
-])
-
-@php
-    $temps24 = array_column($historyPoints24h, 'temp');
-    $temps7 = array_column($historyPoints7d, 'temp');
-    $temps30 = array_column($historyPoints30d, 'temp');
-
-    $min24 = count($temps24) ? number_format(min($temps24), 1) : '0.0';
-    $max24 = count($temps24) ? number_format(max($temps24), 1) : '0.0';
-    $avg24 = count($temps24) ? number_format(array_sum($temps24) / count($temps24), 1) : '0.0';
-
-    $min7 = count($temps7) ? number_format(min($temps7), 1) : '0.0';
-    $max7 = count($temps7) ? number_format(max($temps7), 1) : '0.0';
-    $avg7 = count($temps7) ? number_format(array_sum($temps7) / count($temps7), 1) : '0.0';
-
-    $min30 = count($temps30) ? number_format(min($temps30), 1) : '0.0';
-    $max30 = count($temps30) ? number_format(max($temps30), 1) : '0.0';
-    $avg30 = count($temps30) ? number_format(array_sum($temps30) / count($temps30), 1) : '0.0';
-@endphp
-
 <div
     x-show="historyOpen"
     x-transition
@@ -78,17 +53,17 @@
                 </div>
             </div>
 
-            <div class="mt-6 rounded-[24px] bg-[#061225]/65 px-4 py-4">
+            <div class="mt-10 rounded-[24px] bg-[#061225]/65 px-3 py-4 sm:px-4">
                 <div x-show="historyTab === '24h'" x-cloak>
-                    <x-history :points="$historyPoints24h" :height="160" />
+                    <div x-html="chartSvg(historyPoints24h, 160, 'm24')"></div>
                 </div>
 
                 <div x-show="historyTab === '7d'" x-cloak>
-                    <x-history :points="$historyPoints7d" :height="160" />
+                    <div x-html="chartSvg(historyPoints7d, 160, 'm7')"></div>
                 </div>
 
                 <div x-show="historyTab === '30d'" x-cloak>
-                    <x-history :points="$historyPoints30d" :height="160" />
+                    <div x-html="chartSvg(historyPoints30d, 160, 'm30')"></div>
                 </div>
             </div>
 
@@ -100,17 +75,17 @@
                 >
                     <div>
                         <p class="text-2xl font-semibold text-white/55">Min</p>
-                        <p class="mt-2 text-4xl font-semibold text-white">{{ $min24 }}°C</p>
+                        <p class="mt-2 text-4xl font-semibold text-white" x-text="statMin(historyPoints24h)"></p>
                     </div>
 
                     <div class="border-x border-white/10">
                         <p class="text-2xl font-semibold text-white/55">Max</p>
-                        <p class="mt-2 text-4xl font-semibold text-white">{{ $max24 }}°C</p>
+                        <p class="mt-2 text-4xl font-semibold text-white" x-text="statMax(historyPoints24h)"></p>
                     </div>
 
                     <div>
                         <p class="text-2xl font-semibold text-white/55">AVG</p>
-                        <p class="mt-2 text-4xl font-semibold text-white">{{ $avg24 }}°C</p>
+                        <p class="mt-2 text-4xl font-semibold text-white" x-text="statAvg(historyPoints24h)"></p>
                     </div>
                 </div>
 
@@ -121,17 +96,17 @@
                 >
                     <div>
                         <p class="text-2xl font-semibold text-white/55">Min</p>
-                        <p class="mt-2 text-4xl font-semibold text-white">{{ $min7 }}°C</p>
+                        <p class="mt-2 text-4xl font-semibold text-white" x-text="statMin(historyPoints7d)"></p>
                     </div>
 
                     <div class="border-x border-white/10">
                         <p class="text-2xl font-semibold text-white/55">Max</p>
-                        <p class="mt-2 text-4xl font-semibold text-white">{{ $max7 }}°C</p>
+                        <p class="mt-2 text-4xl font-semibold text-white" x-text="statMax(historyPoints7d)"></p>
                     </div>
 
                     <div>
                         <p class="text-2xl font-semibold text-white/55">AVG</p>
-                        <p class="mt-2 text-4xl font-semibold text-white">{{ $avg7 }}°C</p>
+                        <p class="mt-2 text-4xl font-semibold text-white" x-text="statAvg(historyPoints7d)"></p>
                     </div>
                 </div>
 
@@ -142,23 +117,23 @@
                 >
                     <div>
                         <p class="text-2xl font-semibold text-white/55">Min</p>
-                        <p class="mt-2 text-4xl font-semibold text-white">{{ $min30 }}°C</p>
+                        <p class="mt-2 text-4xl font-semibold text-white" x-text="statMin(historyPoints30d)"></p>
                     </div>
 
                     <div class="border-x border-white/10">
                         <p class="text-2xl font-semibold text-white/55">Max</p>
-                        <p class="mt-2 text-4xl font-semibold text-white">{{ $max30 }}°C</p>
+                        <p class="mt-2 text-4xl font-semibold text-white" x-text="statMax(historyPoints30d)"></p>
                     </div>
 
                     <div>
                         <p class="text-2xl font-semibold text-white/55">AVG</p>
-                        <p class="mt-2 text-4xl font-semibold text-white">{{ $avg30 }}°C</p>
+                        <p class="mt-2 text-4xl font-semibold text-white" x-text="statAvg(historyPoints30d)"></p>
                     </div>
                 </div>
             </div>
 
             <p class="mt-6 text-center text-2xl font-medium text-white/65">
-                Ostatnia aktualizacja: {{ $historyLastUpdated ?? '—' }}
+                Ostatnia aktualizacja: <span x-text="historyLastUpdated || '—'"></span>
             </p>
         </div>
     </div>

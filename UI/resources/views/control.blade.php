@@ -30,73 +30,7 @@
                 @endphp
                 <div
                     id="control-panel-root"
-                    x-data="{
-                        temperature: {{ number_format($sliderInit, 1, '.', '') }},
-                        activeMode: '{{ $room['state_name'] ?? 'auto' }}',
-                        deviceUid: '{{ $room['device_uid'] }}',
-                        historyOpen: false,
-                        historyTab: '24h',
-                        commandCooldownUntil: 0,
-
-                        thumbLeftPct() {
-                            const t = Math.min(30, Math.max(10, Number(this.temperature) || 21));
-                            return ((t - 10) / 20) * 100;
-                        },
-
-                        async sendCommand(mode, targetTemp = null) {
-                            const modeMap = { 'heating': 1, 'cooling': 2, 'auto': 3, 'monitor': 4 };
-                            const state = modeMap[mode];
-                            if (state === undefined) {
-                                return;
-                            }
-                            const rawTarget = targetTemp ?? this.temperature;
-                            const target = Math.min(30, Math.max(10, Number(rawTarget) || 21));
-                            const payload = {
-                                device_uid: this.deviceUid,
-                                state,
-                                target
-                            };
-
-                            try {
-                                const response = await fetch('{{ route('device.command') }}', {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                                        'Accept': 'application/json'
-                                    },
-                                    body: JSON.stringify(payload)
-                                });
-                                const body = await response.json().catch(() => ({}));
-                                if (!response.ok) {
-                                    console.error('Sterowanie:', response.status, body);
-                                    return;
-                                }
-                                this.commandCooldownUntil = Date.now() + 3000;
-                                console.log('MQTT Status:', body.status ?? body);
-                            } catch (error) {
-                                console.error('Błąd sterowania:', error);
-                            }
-                        },
-
-                        setMode(mode) {
-                            if (this.activeMode === mode) {
-                                this.activeMode = 'monitor';
-                            } else {
-                                this.activeMode = mode;
-                            }
-                            this.sendCommand(this.activeMode);
-                        },
-
-                        isAuto() {
-                            return this.activeMode === 'auto';
-                        },
-                        tabClass(tab) {
-                            return this.historyTab === tab
-                                ? 'rounded-full bg-blue-500/15 px-6 py-2 text-2xl font-medium text-blue-300 shadow-[0_0_20px_rgba(59,130,246,0.18)] transition'
-                                : 'rounded-full px-6 py-2 text-2xl font-medium text-blue-200/80 transition hover:text-blue-200'
-                        }
-                    }"
+                    x-data="thermioControlPanel"
                     class="relative text-center"
                 >
                     <div class="relative mb-2 w-fit mx-auto">
@@ -221,25 +155,22 @@
                         </p>
                     </div>
 
-                    <div class="mt-8">
-                        <div class="relative mx-auto w-full max-w-[360px]">
-                            <x-history :points="$historyPoints" />
-
+                    <div class="mt-8 mx-auto w-full max-w-[400px] px-1">
+                        <div class="mb-3 flex items-center justify-between gap-3">
+                            <span class="text-xs text-white/50">Ostatnie godziny (°C)</span>
                             <button
                                 type="button"
                                 @click="historyOpen = true"
-                                class="absolute -right-4 top-0 rounded-full border border-blue-400/40 bg-blue-500/10 px-4 py-1.5 text-xs text-blue-200 shadow-[0_0_20px_rgba(59,130,246,0.18)] transition hover:bg-blue-500/20"
+                                class="shrink-0 rounded-full border border-blue-400/40 bg-blue-500/10 px-4 py-1.5 text-xs text-blue-200 shadow-[0_0_20px_rgba(59,130,246,0.18)] transition hover:bg-blue-500/20"
                             >
                                 Historia
                             </button>
                         </div>
+                        <div class="rounded-xl border border-white/10 bg-[#061225]/40 px-1 py-2">
+                            <div x-html="chartSvg(historyPoints, 110, 'inl')"></div>
+                        </div>
                     </div>
-                    <x-history-modal
-                        :historyPoints24h="$historyPoints24h"
-                        :historyPoints7d="$historyPoints7d"
-                        :historyPoints30d="$historyPoints30d"
-                        :historyLastUpdated="$historyLastUpdated ?? null"
-                    />
+                    <x-history-modal />
                 </div>
             </div>
         </div>
@@ -249,6 +180,147 @@
 
 @section('scripts')
 <script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('thermioControlPanel', () => ({
+            temperature: {{ number_format($sliderInit, 1, '.', '') }},
+            activeMode: @json($room['state_name'] ?? 'auto'),
+            deviceUid: @json($room['device_uid']),
+            historyOpen: false,
+            historyTab: '24h',
+            commandCooldownUntil: 0,
+            historyPoints: @json($historyPoints),
+            historyPoints24h: @json($historyPoints24h),
+            historyPoints7d: @json($historyPoints7d),
+            historyPoints30d: @json($historyPoints30d),
+            historyLastUpdated: @json($historyLastUpdated ?? null),
+
+            thumbLeftPct() {
+                const t = Math.min(30, Math.max(10, Number(this.temperature) || 21));
+                return ((t - 10) / 20) * 100;
+            },
+
+            async sendCommand(mode, targetTemp = null) {
+                const modeMap = { heating: 1, cooling: 2, auto: 3, monitor: 4 };
+                const state = modeMap[mode];
+                if (state === undefined) {
+                    return;
+                }
+                const rawTarget = targetTemp ?? this.temperature;
+                const target = Math.min(30, Math.max(10, Number(rawTarget) || 21));
+                const payload = {
+                    device_uid: this.deviceUid,
+                    state,
+                    target,
+                };
+
+                try {
+                    const response = await fetch('{{ route('device.command') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            Accept: 'application/json',
+                        },
+                        body: JSON.stringify(payload),
+                    });
+                    const body = await response.json().catch(() => ({}));
+                    if (!response.ok) {
+                        console.error('Sterowanie:', response.status, body);
+                        return;
+                    }
+                    this.commandCooldownUntil = Date.now() + 3000;
+                    console.log('MQTT Status:', body.status ?? body);
+                } catch (error) {
+                    console.error('Błąd sterowania:', error);
+                }
+            },
+
+            setMode(mode) {
+                if (this.activeMode === mode) {
+                    this.activeMode = 'monitor';
+                } else {
+                    this.activeMode = mode;
+                }
+                this.sendCommand(this.activeMode);
+            },
+
+            isAuto() {
+                return this.activeMode === 'auto';
+            },
+
+            tabClass(tab) {
+                return this.historyTab === tab
+                    ? 'rounded-full bg-blue-500/15 px-6 py-2 text-2xl font-medium text-blue-300 shadow-[0_0_20px_rgba(59,130,246,0.18)] transition'
+                    : 'rounded-full px-6 py-2 text-2xl font-medium text-blue-200/80 transition hover:text-blue-200';
+            },
+
+            chartSvg(points, height, uid) {
+                if (!window.ThermioChart || typeof window.ThermioChart.svg !== 'function') {
+                    return '<div class="py-6 text-center text-sm text-white/45">Ładowanie wykresu…</div>';
+                }
+                return window.ThermioChart.svg(points, height, uid);
+            },
+
+            statMin(points) {
+                return window.ThermioChart && window.ThermioChart.statMin
+                    ? window.ThermioChart.statMin(points)
+                    : '—';
+            },
+            statMax(points) {
+                return window.ThermioChart && window.ThermioChart.statMax
+                    ? window.ThermioChart.statMax(points)
+                    : '—';
+            },
+            statAvg(points) {
+                return window.ThermioChart && window.ThermioChart.statAvg
+                    ? window.ThermioChart.statAvg(points)
+                    : '—';
+            },
+
+            async init() {
+                const historyUrl = @json(route('fetch.history', ['device_uid' => $room['device_uid']]));
+                const applyHistory = (d) => {
+                    if (!d || typeof d !== 'object') {
+                        return;
+                    }
+                    if (Array.isArray(d.historyPoints)) {
+                        this.historyPoints = d.historyPoints;
+                    }
+                    if (Array.isArray(d.historyPoints24h)) {
+                        this.historyPoints24h = d.historyPoints24h;
+                    }
+                    if (Array.isArray(d.historyPoints7d)) {
+                        this.historyPoints7d = d.historyPoints7d;
+                    }
+                    if (Array.isArray(d.historyPoints30d)) {
+                        this.historyPoints30d = d.historyPoints30d;
+                    }
+                    if (Object.prototype.hasOwnProperty.call(d, 'historyLastUpdated')) {
+                        this.historyLastUpdated = d.historyLastUpdated;
+                    }
+                };
+                const pollHistory = async () => {
+                    try {
+                        const r = await fetch(historyUrl, { headers: { Accept: 'application/json' } });
+                        if (!r.ok) {
+                            return;
+                        }
+                        applyHistory(await r.json());
+                    } catch (e) {
+                        console.error('Historia:', e);
+                    }
+                };
+                await pollHistory();
+                setInterval(pollHistory, 30000);
+                this.$watch('historyOpen', (open) => {
+                    if (open) {
+                        pollHistory();
+                    }
+                });
+            },
+        }));
+    });
+
     function updateControlData() {
         fetch('{{ route('fetch.status', ['device_uid' => $room['device_uid']]) }}', {
             headers: { 'Accept': 'application/json' }

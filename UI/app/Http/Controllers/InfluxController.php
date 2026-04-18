@@ -2,11 +2,31 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\InfluxHistoryService;
 use InfluxDB2\Client;
 use Throwable;
 
 class InfluxController extends Controller
 {
+    public function getHistoryData(string $device_uid, InfluxHistoryService $historyService)
+    {
+        $device = auth()->user()->devices()->where('device_uid', $device_uid)->first();
+
+        if (! $device) {
+            return response()->json(['error' => 'Urządzenie nie znalezione'], 404);
+        }
+
+        $history = $historyService->forDevice($device_uid, (int) auth()->id());
+
+        return response()->json([
+            'historyPoints' => $history['historyPoints'],
+            'historyPoints24h' => $history['historyPoints24h'],
+            'historyPoints7d' => $history['historyPoints7d'],
+            'historyPoints30d' => $history['historyPoints30d'],
+            'historyLastUpdated' => $history['lastUpdatedLabel'],
+        ]);
+    }
+
     public function getLatestData(string $device_uid)
     {
         $device = auth()->user()->devices()->where('device_uid', $device_uid)->first();
