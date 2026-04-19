@@ -30,9 +30,9 @@ state devState = SENSOR_ONLY; // Domyślnie tryb automatyczny
 // KONFIGURACJA IDENTYFIKACJI
 const char* userId = "user_1"; // Tu ID później pobierane przez Bluetooth
 #define SERVICE_UUID        "12345678-1234-1234-1234-1234567890ab"
-#define CHARACTERISTIC_UUID "abcd1234-5678-1234-5678-abcdef123456"
+#define DEVICE_ID_CHARACTERISTIC_UUID "abcd1234-5678-1234-5678-abcdef123456"
 
-NimBLECharacteristic *pCharacteristic;
+NimBLECharacteristic *deviceIdCharacteristic;
 
 // Dynamiczne tematy MQTT
 char publishTopic[128];
@@ -58,8 +58,8 @@ char subscribeTopic[128];
 #define YELLOW  0xFFE0
 #define GRAY    0x7BEF 
 
-const char* WIFI_SSID = "";
-const char* WIFI_PASS = "";
+const char* WIFI_SSID = "KT";
+const char* WIFI_PASS = "KT_int2023";
 
 Adafruit_AHTX0 aht;
 Adafruit_SSD1331 display = Adafruit_SSD1331(CS_PIN, DC_PIN, MOSI_PIN, SCLK_PIN, RST_PIN);
@@ -148,12 +148,14 @@ void setupBLE() {
     NimBLEServer *pServer = NimBLEDevice::createServer();
     NimBLEService *pService = pServer->createService(SERVICE_UUID);
 
-    pCharacteristic = pService->createCharacteristic(
-        CHARACTERISTIC_UUID,
-        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE
+    deviceIdCharacteristic = pService->createCharacteristic(
+        DEVICE_ID_CHARACTERISTIC_UUID,
+        NIMBLE_PROPERTY::READ
     );
 
-    pCharacteristic->setValue(deviceID.c_str());
+    deviceIdCharacteristic->setValue((uint8_t*)deviceID.c_str(), deviceID.length());
+
+    Serial.println(deviceID);
 
     pService->start();
 

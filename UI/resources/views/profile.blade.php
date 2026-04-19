@@ -225,32 +225,51 @@
 
 @section('scripts')
 <script>
+const SERVICE_UUID = "12345678-1234-1234-1234-1234567890ab";
+const CHARACTERISTIC_UUID = "abcd1234-5678-1234-5678-abcdef123456";
+
 async function connectBluetooth() {
     const statusBox = document.getElementById('bluetooth-status');
     const uidInput = document.getElementById('device_uid');
 
     if (!navigator.bluetooth) {
-        statusBox.innerText = 'Ta przeglądarka nie obsługuje Bluetooth.';
+        statusBox.innerText = 'Ta przeglądarka nie obsługuje Web Bluetooth.';
         return;
     }
 
     try {
+        statusBox.innerText = 'Szukanie urządzenia...';
+
         const device = await navigator.bluetooth.requestDevice({
-            acceptAllDevices: true
+            filters: [{ services: [SERVICE_UUID] }]
         });
 
-        console.log("Bluetooth device:", device);
-        console.log("Bluetooth device id:", device.id);
-        console.log("Bluetooth device name:", device.name);
+        statusBox.innerText = 'Łączenie z urządzeniem...';
 
-        if (uidInput) {
-            uidInput.value = device.id || '';
+        const server = await device.gatt.connect();
+        const service = await server.getPrimaryService(SERVICE_UUID);
+        const characteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
+
+        const value = await characteristic.readValue();
+        const decoder = new TextDecoder('utf-8');
+        const deviceMac = decoder.decode(value).trim();
+
+        if (!deviceMac) {
+            throw new Error('Nie udało się odczytać MAC urządzenia.');
         }
 
-        statusBox.innerText = `Połączono z urządzeniem: ${device.name || 'Nieznane urządzenie'} | ID: ${device.id || 'brak'}`;
+        if (uidInput) {
+            uidInput.value = deviceMac;
+        }
+
+        statusBox.innerText = `Połączono z urządzeniem: ${device.name || 'Thermio'} | MAC: ${deviceMac}`;
+
+        if (device.gatt.connected) {
+            device.gatt.disconnect();
+        }
     } catch (error) {
-        statusBox.innerText = 'Nie udało się połączyć z urządzeniem.';
-        console.error(error);
+        console.error('Błąd BLE:', error);
+        statusBox.innerText = `Nie udało się pobrać identyfikatora urządzenia. ${error.message ?? ''}`;
     }
 }
 </script>
