@@ -12,6 +12,8 @@
 #include <PubSubClient.h>
 #include <Preferences.h>
 
+#include <NimBLEDevice.h>
+
 // Definicja stanów (zgodnie z panelem WWW: 1–3 sterowanie, 4 = tylko pomiar MQTT)
 enum state {
   HEATING = 1,
@@ -27,6 +29,10 @@ state devState = SENSOR_ONLY; // Domyślnie tryb automatyczny
 
 // KONFIGURACJA IDENTYFIKACJI
 const char* userId = "user_1"; // Tu ID później pobierane przez Bluetooth
+#define SERVICE_UUID        "12345678-1234-1234-1234-1234567890ab"
+#define CHARACTERISTIC_UUID "abcd1234-5678-1234-5678-abcdef123456"
+
+NimBLECharacteristic *pCharacteristic;
 
 // Dynamiczne tematy MQTT
 char publishTopic[128];
@@ -136,10 +142,33 @@ void publishMessage() {
     client.publish(publishTopic, jsonBuffer);
 }
 
+void setupBLE() {
+    NimBLEDevice::init("Thermio");
+
+    NimBLEServer *pServer = NimBLEDevice::createServer();
+    NimBLEService *pService = pServer->createService(SERVICE_UUID);
+
+    pCharacteristic = pService->createCharacteristic(
+        CHARACTERISTIC_UUID,
+        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE
+    );
+
+    pCharacteristic->setValue(deviceID.c_str());
+
+    pService->start();
+
+    NimBLEAdvertising *pAdvertising = NimBLEDevice::getAdvertising();
+    pAdvertising->addServiceUUID(SERVICE_UUID);
+    pAdvertising->start();
+
+    Serial.println("BLE gotowe");
+}
+
 void setup() {
     Serial.begin(115200);
 
     // ID urządzenia na podstawie MAC
+    WiFi.mode(WIFI_STA);
     deviceID = WiFi.macAddress();
     deviceID.replace(":", "");
 
@@ -169,7 +198,7 @@ void setup() {
     display.begin();
     display.fillScreen(BLACK);
     aht.begin();
-
+    setupBLE();
     connectToAWS();
 }
 

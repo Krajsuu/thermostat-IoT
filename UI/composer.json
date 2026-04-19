@@ -6,11 +6,12 @@
     "keywords": ["laravel", "framework"],
     "license": "MIT",
     "require": {
-        "influxdata/influxdb-client-php": "*",
-        "php-mqtt/laravel-client": "*",
         "php": "^8.3",
+        "influxdata/influxdb-client-php": "*",
         "laravel/framework": "^13.0",
-        "laravel/tinker": "^3.0"
+        "laravel/tinker": "^3.0",
+        "php-mqtt/client": "^2.3",
+        "php-mqtt/laravel-client": "*"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

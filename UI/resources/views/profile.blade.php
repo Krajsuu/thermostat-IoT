@@ -239,11 +239,15 @@ async function connectBluetooth() {
             acceptAllDevices: true
         });
 
+        console.log("Bluetooth device:", device);
+        console.log("Bluetooth device id:", device.id);
+        console.log("Bluetooth device name:", device.name);
+
         if (uidInput) {
             uidInput.value = device.id || '';
         }
 
-        statusBox.innerText = `Połączono z urządzeniem: ${device.name || 'Nieznane urządzenie'}`;
+        statusBox.innerText = `Połączono z urządzeniem: ${device.name || 'Nieznane urządzenie'} | ID: ${device.id || 'brak'}`;
     } catch (error) {
         statusBox.innerText = 'Nie udało się połączyć z urządzeniem.';
         console.error(error);
