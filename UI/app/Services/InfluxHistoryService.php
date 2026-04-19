@@ -112,12 +112,13 @@ class InfluxHistoryService
     {
         $flux = sprintf(
             'from(bucket: "%s")
-  |> range(start: -48h)
-  |> filter(fn: (r) => r["_measurement"] == "%s")
-  |> filter(fn: (r) => r["user_id"] == "%s")
-  |> filter(fn: (r) => r["device_id"] == "%s")
-  |> filter(fn: (r) => r["_field"] == "%s")
-  |> last()',
+            |> range(start: -48h)
+            |> filter(fn: (r) => r["_measurement"] == "%s")
+            |> filter(fn: (r) => r["user_id"] == "%s")
+            |> filter(fn: (r) => r["device_id"] == "%s")
+            |> filter(fn: (r) => r["_field"] == "%s")
+            |> last()
+            |> timeShift(duration: 2h)',
             $bucketEsc,
             self::MEASUREMENT,
             $userEsc,
@@ -170,14 +171,16 @@ class InfluxHistoryService
         }
 
         $flux = sprintf(
-            'from(bucket: "%s")
-  |> range(start: %s)
-  |> filter(fn: (r) => r["_measurement"] == "%s")
-  |> filter(fn: (r) => r["user_id"] == "%s")
-  |> filter(fn: (r) => r["device_id"] == "%s")
-  |> filter(fn: (r) => r["_field"] == "%s")
-  |> aggregateWindow(every: %s, fn: mean, createEmpty: false)
-  |> sort(columns: ["_time"])',
+            'import "timezone"
+            option location = location.load(name: "Europe/Warsaw")
+            from(bucket: "%s")
+            |> range(start: %s)
+            |> filter(fn: (r) => r["_measurement"] == "%s")
+            |> filter(fn: (r) => r["user_id"] == "%s")
+            |> filter(fn: (r) => r["device_id"] == "%s")
+            |> filter(fn: (r) => r["_field"] == "%s")
+            |> aggregateWindow(every: %s, fn: mean, createEmpty: false)
+            |> sort(columns: ["_time"])',
             $bucketEsc,
             $range,
             self::MEASUREMENT,
