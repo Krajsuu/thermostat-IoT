@@ -91,7 +91,7 @@
                                 @php
                                     $room = $device->room_name;
                                     $deviceName = $device->name;
-                                    $isOnline = $device->is_active;
+                                    $isOnline = $device->is_online;
                                     $status = $isOnline ? 'Online' : 'Offline';
                                 @endphp
 
