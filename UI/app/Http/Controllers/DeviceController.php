@@ -21,8 +21,8 @@ class DeviceController extends Controller
             'name' => $validated['name'],
             'device_uid' => $validated['device_uid'],
             'room_name' => $validated['room_name'],
-            'is_active' => false,
-            'last_seen_at' => null,
+            'is_active' => true,
+            'last_seen_at' => now('Europe/Warsaw'),
         ]);
 
         return back()->with('success', 'Urządzenie zostało dodane.');

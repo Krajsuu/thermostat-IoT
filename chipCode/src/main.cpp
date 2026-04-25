@@ -34,6 +34,13 @@ const char* userId = "user_1"; // Tu ID później pobierane przez Bluetooth
 
 NimBLECharacteristic *deviceIdCharacteristic;
 
+#define WIFI_CONFIG_CHARACTERISTIC_UUID "dcba4321-8765-4321-8765-fedcba654321"
+NimBLECharacteristic *wifiConfigCharacteristic;
+
+#define WIFI_STATUS_CHARACTERISTIC_UUID "eeee1111-2222-3333-4444-555566667777"
+NimBLECharacteristic *wifiStatusCharacteristic;
+bool wifiConfiguredSuccessfully = false;
+
 // Dynamiczne tematy MQTT
 char publishTopic[128];
 char subscribeTopic[128];
@@ -58,9 +65,6 @@ char subscribeTopic[128];
 #define YELLOW  0xFFE0
 #define GRAY    0x7BEF 
 
-const char* WIFI_SSID = "KT";
-const char* WIFI_PASS = "KT_int2023";
-
 Adafruit_AHTX0 aht;
 Adafruit_SSD1331 display = Adafruit_SSD1331(CS_PIN, DC_PIN, MOSI_PIN, SCLK_PIN, RST_PIN);
 WiFiClientSecure net = WiFiClientSecure();
@@ -68,6 +72,8 @@ PubSubClient client(net);
 
 float tempC = 0, humi = 0;
 int dotX = 48, dotY = 32;
+
+bool shouldConnectWiFi = false;
 
 // --- FUNKCJA OBSŁUGI KOMEND ---
 void callback(char* topic, byte* payload, unsigned int length) {
@@ -105,14 +111,58 @@ void callback(char* topic, byte* payload, unsigned int length) {
     }
 }
 
-void connectToAWS() {
-    WiFi.mode(WIFI_STA);
-    WiFi.begin(WIFI_SSID, WIFI_PASS);
-    
-    while (WiFi.status() != WL_CONNECTED) { delay(500); Serial.print("."); }
-    Serial.println("\nWi-Fi polaczone.");
+bool connectToAWS() {
+    if (WiFi.status() == WL_CONNECTED && client.connected()) {
+        return true;
+    }
 
-    configTime(3600, 3600, "pool.ntp.org"); // Czas letni/zimowy
+    preferences.begin("thermio", true);
+    String savedSsid = preferences.getString("wifi_ssid", "");
+    String savedPass = preferences.getString("wifi_pass", "");
+    preferences.end();
+
+    if (savedSsid.length() == 0) {
+        Serial.println("Brak zapisanej sieci WiFi. Skonfiguruj przez BLE.");
+        return false;
+    }
+
+    Serial.print("Laczenie z WiFi: ");
+    Serial.println(savedSsid);
+
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(savedSsid.c_str(), savedPass.c_str());
+
+    unsigned long startAttempt = millis();
+
+    while (WiFi.status() != WL_CONNECTED && millis() - startAttempt < 15000) {
+        delay(500);
+        Serial.print(".");
+    }
+
+    if (WiFi.status() != WL_CONNECTED) {
+        Serial.println("\nNie udalo sie polaczyc z WiFi.");
+
+        preferences.begin("thermio", false);
+        preferences.remove("wifi_ssid");
+        preferences.remove("wifi_pass");
+        preferences.end();
+
+        if (wifiStatusCharacteristic) {
+            wifiStatusCharacteristic->setValue("WIFI_ERROR");
+        }
+
+        return false;
+    }
+
+    Serial.println("\nWi-Fi polaczone.");
+    Serial.print("IP: ");
+    Serial.println(WiFi.localIP());
+
+    if (wifiStatusCharacteristic) {
+        wifiStatusCharacteristic->setValue("WIFI_OK");
+    }
+
+    configTime(3600, 3600, "pool.ntp.org");
 
     net.setCACert(AWS_CERT_CA);
     net.setCertificate(AWS_CERT_CRT);
@@ -121,13 +171,39 @@ void connectToAWS() {
     client.setServer(AWS_IOT_ENDPOINT, 8883);
     client.setCallback(callback);
 
-    while (!client.connect(THING_NAME)) { delay(500); Serial.print("M"); }
+    Serial.println("Laczenie z AWS IoT...");
 
-    client.subscribe(subscribeTopic);
-    Serial.println("AWS IoT Polaczone!");
+    unsigned long mqttStart = millis();
+
+    while (!client.connected() && millis() - mqttStart < 15000) {
+        if (client.connect(THING_NAME)) {
+            Serial.println("AWS IoT Polaczone!");
+            client.subscribe(subscribeTopic);
+
+            if (wifiStatusCharacteristic) {
+                wifiStatusCharacteristic->setValue("AWS_OK");
+            }
+
+            return true;
+        }
+
+        delay(500);
+        Serial.print("M");
+    }
+
+    Serial.println("\nNie udalo sie polaczyc z AWS IoT.");
+
+    if (wifiStatusCharacteristic) {
+        wifiStatusCharacteristic->setValue("AWS_ERROR");
+    }
+
+    return false;
 }
 
 void publishMessage() {
+    if (!client.connected()) {
+        return;
+    }
     StaticJsonDocument<256> doc;
     doc["id"] = deviceID;
     doc["temp"] = tempC;
@@ -142,6 +218,50 @@ void publishMessage() {
     client.publish(publishTopic, jsonBuffer);
 }
 
+class WifiConfigCallback : public NimBLECharacteristicCallbacks {
+    void onWrite(NimBLECharacteristic *pCharacteristic) override {
+        std::string value = pCharacteristic->getValue();
+
+        if (value.empty()) {
+            Serial.println("Puste dane WiFi");
+            return;
+        }
+
+        Serial.print("Odebrano WiFi JSON: ");
+        Serial.println(value.c_str());
+
+        StaticJsonDocument<256> doc;
+        DeserializationError error = deserializeJson(doc, value);
+
+        if (error) {
+            Serial.print("Błąd JSON WiFi: ");
+            Serial.println(error.c_str());
+            return;
+        }
+
+        const char* ssid = doc["ssid"];
+        const char* password = doc["password"];
+
+        if (!ssid || !password) {
+            Serial.println("Brak ssid albo password");
+            return;
+        }
+
+        preferences.begin("thermio", false);
+        preferences.putString("wifi_ssid", ssid);
+        preferences.putString("wifi_pass", password);
+        preferences.end();
+
+        Serial.println("sZapisano dane WiFi");
+
+        if (wifiStatusCharacteristic) {
+            wifiStatusCharacteristic->setValue("CONNECTING");
+        }
+
+        shouldConnectWiFi = true;
+    }
+};
+
 void setupBLE() {
     NimBLEDevice::init("Thermio");
 
@@ -155,7 +275,18 @@ void setupBLE() {
 
     deviceIdCharacteristic->setValue((uint8_t*)deviceID.c_str(), deviceID.length());
 
-    Serial.println(deviceID);
+    wifiConfigCharacteristic = pService->createCharacteristic(
+        WIFI_CONFIG_CHARACTERISTIC_UUID,
+        NIMBLE_PROPERTY::WRITE
+    );
+
+    wifiConfigCharacteristic->setCallbacks(new WifiConfigCallback());
+    wifiStatusCharacteristic = pService->createCharacteristic(
+        WIFI_STATUS_CHARACTERISTIC_UUID,
+        NIMBLE_PROPERTY::READ
+    );
+
+    wifiStatusCharacteristic->setValue("WAITING");
 
     pService->start();
 
@@ -205,7 +336,23 @@ void setup() {
 }
 
 void loop() {
-    if (!client.connected()) connectToAWS();
+    if (shouldConnectWiFi) {
+        shouldConnectWiFi = false;
+
+        delay(1000);
+        WiFi.disconnect();
+        delay(500);
+
+        connectToAWS();
+    }
+
+    if (WiFi.status() == WL_CONNECTED && !client.connected()) {
+        connectToAWS();
+    }
+
+    if (!client.connected()) {
+        return;
+    }
     client.loop();
 
     // Odczyt czujnika

@@ -79,7 +79,6 @@
 
     function updateDeviceStatus() {
         devices.forEach(device => {
-            if (!device.is_online) return;
 
             fetch(`/fetch-status/${encodeURIComponent(device.device_uid)}`)
                 .then(response => {
