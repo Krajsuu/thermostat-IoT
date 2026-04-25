@@ -24,4 +24,10 @@ class Device extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function getIsOnlineAttribute()
+    {
+        return $this->last_seen_at !== null
+            && $this->last_seen_at->gt(now()->subMinutes(5));
+    }
 }

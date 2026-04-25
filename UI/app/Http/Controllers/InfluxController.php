@@ -67,8 +67,10 @@ class InfluxController extends Controller
             'fan' => 'OFF'
         ];
 
+        $hasRecords = false;
         foreach ($tables as $table) {
             foreach ($table->records as $record) {
+                $hasRecords=true;
                 $field = $record->getField();
                 $value = $record->getValue();
 
@@ -80,7 +82,16 @@ class InfluxController extends Controller
                 if ($field == 'fan') $data['fan'] = ($value == 1) ? 'ON' : 'OFF';
             }
         }
-
+        if ($hasRecords) {
+            $device->update([
+                'last_seen_at' => now(),
+                'is_active' => true,
+            ]);
+        } else {
+            $device->update([
+                'is_active' => false,
+            ]);
+        }
         return response()->json($data);
     }
 }
