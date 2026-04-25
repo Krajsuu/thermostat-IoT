@@ -174,6 +174,7 @@
                                         id="device_uid"
                                         value="{{ old('device_uid') }}"
                                         placeholder="UID urządzenia"
+                                        readonly
                                         class="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-slate-400 focus:border-white/30 focus:outline-none"
                                     >
 
@@ -391,15 +392,25 @@
                 await new Promise(resolve => setTimeout(resolve, 1000));
 
                 const statusValue = await statusCharacteristic.readValue();
-                wifiStatus = new TextDecoder('utf-8').decode(statusValue).trim();
 
-                if (wifiStatus === 'WIFI_OK' || wifiStatus === 'AWS_OK') {
+                wifiStatus = new TextDecoder('utf-8')
+                    .decode(statusValue)
+                    .replace(/\0/g, '')
+                    .replace(/\r?\n/g, '')
+                    .trim();
+
+                if (wifiStatus.includes('WIFI_OK') || wifiStatus.includes('AWS_OK')) {
                     statusBox.innerText = 'Połączono z Wi-Fi. Możesz zapisać urządzenie.';
 
                     const saveButton = document.getElementById('save-device-button');
-                    saveButton.disabled = false;
-                    saveButton.classList.remove('opacity-50');
 
+                    if (saveButton) {
+                        saveButton.disabled = false;
+                        saveButton.removeAttribute('disabled');
+                        saveButton.classList.remove('opacity-50');
+                        saveButton.classList.add('opacity-100');
+                    }
+                    closeWifiModal();
                     return;
                 }
 

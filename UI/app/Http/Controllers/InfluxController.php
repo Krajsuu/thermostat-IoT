@@ -84,7 +84,7 @@ class InfluxController extends Controller
         }
         if ($hasRecords) {
             $device->update([
-                'last_seen_at' => now(),
+                'last_seen_at' => now('Europe/Warsaw'),
                 'is_active' => true,
             ]);
         } else {
