@@ -47,7 +47,7 @@ class InfluxController extends Controller
 
             // Pobieramy dane z InfluxDB, filtrując po user_id oraz device_id.
             $query = 'from(bucket: "'.env('INFLUXDB_BUCKET').'")
-                |> range(start: -1h)
+                |> range(start: -5m)
                 |> filter(fn: (r) => r["_measurement"] == "device_status")
                 |> filter(fn: (r) => r["user_id"] == "user_' . auth()->id() . '")
                 |> filter(fn: (r) => r["device_id"] == "' . $device_uid . '")
