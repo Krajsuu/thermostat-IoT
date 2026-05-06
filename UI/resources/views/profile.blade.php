@@ -107,14 +107,17 @@
                                             </span>
                                         </div>
 
-                                        <div>
+                                        <form method="POST" action="{{ route('devices.delete', $device->id) }}">
+                                            @csrf
+                                            @method('DELETE')
+
                                             <button
-                                                type="button"
-                                                class="rounded-xl border border-white/10 bg-white/5 px-6 py-2 text-lg text-white transition hover:bg-white/10"
+                                                type="submit"
+                                                class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-base text-white transition hover:bg-white/10"
                                             >
-                                                Edytuj
+                                                Usuń urządzenie
                                             </button>
-                                        </div>
+                                        </form>
                                     </div>
 
                                     <div class="space-y-3 px-5 py-5 md:hidden">
@@ -127,13 +130,17 @@
                                         </div>
 
                                         <div class="text-base text-slate-300">{{ $deviceName }}</div>
+                                        <form method="POST" action="{{ route('devices.delete', $device->id) }}">
+                                            @csrf
+                                            @method('DELETE')
 
-                                        <button
-                                            type="button"
-                                            class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-base text-white transition hover:bg-white/10"
-                                        >
-                                            Edytuj
-                                        </button>
+                                            <button
+                                                type="submit"
+                                                class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-base text-white transition hover:bg-white/10"
+                                            >
+                                                Usuń urządzenie
+                                            </button>
+                                        </form>
                                     </div>
                                 </div>
                             @empty
@@ -195,7 +202,7 @@
                                     >
                                         Połącz przez Bluetooth
                                     </button>
-
+                                    
                                     <button
                                         id="save-device-button"
                                         type="submit"

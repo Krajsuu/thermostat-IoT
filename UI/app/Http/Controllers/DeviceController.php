@@ -27,4 +27,12 @@ class DeviceController extends Controller
 
         return back()->with('success', 'Urządzenie zostało dodane.');
     }
+
+    public function deleteDevice($device){
+        $device = Device::findOrFail($device);
+
+        $device->delete();
+
+        return back()->with('success', 'Urządzenie zostało usunięte.');
+    }
 }
