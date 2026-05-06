@@ -20,6 +20,8 @@ Route::middleware('auth')->group(function () {
         ->name('profile');
 
     Route::post('/devices', [DeviceController::class, 'store'])->name('device.store');
+    Route::delete('/devices/{device}', [DeviceController::class, 'deleteDevice'])
+    ->name('devices.delete');
 
     Route::get('/dashboard', [HomeController::class, 'index'])->name('dashboard');
 
