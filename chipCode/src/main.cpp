@@ -75,6 +75,52 @@ int dotX = 48, dotY = 32;
 
 bool shouldConnectWiFi = false;
 
+void scanWiFiNetworks() {
+    Serial.println("Rozpoczynam skanowanie Wi-Fi...");
+
+    // Tryb Station jest wymagany do skanowania
+    WiFi.mode(WIFI_STA);
+    WiFi.disconnect();
+    delay(100);
+
+    // scanNetworks zwraca liczbę znalezionych sieci
+    int n = WiFi.scanNetworks();
+    Serial.println("Skanowanie zakończone.");
+
+    if (n == 0) {
+        Serial.println("Nie znaleziono żadnych sieci.");
+    } else {
+        Serial.print(n);
+        Serial.println(" znalezionych sieci:");
+        
+        for (int i = 0; i < n; ++i) {
+            // Wypisz SSID (nazwę), siłę sygnału (RSSI) oraz kanał
+            Serial.print(i + 1);
+            Serial.print(": ");
+            Serial.print(WiFi.SSID(i));
+            Serial.print(" (Sygnał: ");
+            Serial.print(WiFi.RSSI(i));
+            Serial.print(" dBm, Kanał: ");
+            Serial.print(WiFi.channel(i));
+            Serial.print(") Zabezpieczenia: ");
+            
+            // Typ zabezpieczeń (zamiana kodu na tekst)
+            byte encryptionType = WiFi.encryptionType(i);
+            switch (encryptionType) {
+                case WIFI_AUTH_OPEN: Serial.println("Otwarte"); break;
+                case WIFI_AUTH_WEP:  Serial.println("WEP"); break;
+                case WIFI_AUTH_WPA_PSK: Serial.println("WPA"); break;
+                case WIFI_AUTH_WPA2_PSK: Serial.println("WPA2"); break;
+                case WIFI_AUTH_WPA_WPA2_PSK: Serial.println("WPA+WPA2"); break;
+                case WIFI_AUTH_WPA2_ENTERPRISE: Serial.println("WPA2 Enterprise"); break;
+                default: Serial.println("Nieznane");
+            }
+            delay(10);
+        }
+    }
+    Serial.println("");
+}
+
 // --- FUNKCJA OBSŁUGI KOMEND ---
 void callback(char* topic, byte* payload, unsigned int length) {
     Serial.print("Odebrano komende na temacie: "); Serial.println(topic);
@@ -305,6 +351,8 @@ void setup() {
     deviceID = WiFi.macAddress();
     deviceID.replace(":", "");
 
+    scanWiFiNetworks();
+
     // BUDOWANIE TEMATÓW Z userId
     sprintf(publishTopic, "thermio/%s/devices/%s/status", userId, deviceID.c_str());
     sprintf(subscribeTopic, "thermio/%s/devices/%s/cmd", userId, deviceID.c_str());
@@ -364,6 +412,43 @@ void loop() {
         humi = humidity.relative_humidity;
         lastSensor = millis();
     }
+
+    // --- STEROWANIE TRYBAMI W TERMOSTACIE ---
+    int rawX = analogRead(JOY_X_PIN);
+    static unsigned long lastModeJoy = 0;
+
+    if (millis() - lastModeJoy > 500) {
+        state modeOrder[] = {SENSOR_ONLY, COOLING, HEATING, AUTO};
+        int currentIndex = 0;
+
+        for (int i = 0; i < 4; i++) {
+            if (modeOrder[i] == devState) currentIndex = i;
+        }
+
+        int newIndex = currentIndex;
+        if (rawX < 500) { // W LEWO
+            newIndex = (currentIndex - 1 + 4) % 4;
+        } else if (rawX > 3500) { // W PRAWO
+            newIndex = (currentIndex + 1) % 4;
+        }
+
+        // Jeśli nastąpiła zmiana
+        if (newIndex != currentIndex) {
+            devState = modeOrder[newIndex];
+            lastModeJoy = millis();
+            
+            Serial.print("Zmiana trybu joystickiem na: "); Serial.println((int)devState);
+
+            // Zapisz nowy tryb w pamięci
+            preferences.begin("thermio", false);
+            preferences.putInt("devState", (int)devState);
+            preferences.end();
+            
+            // Opcjonalnie: wyczyść ekran, aby uniknąć nałożenia napisów
+            display.fillScreen(BLACK);
+        }
+    }
+
 
     // --- LOGIKA STEROWANIA PRZEKAŹNIKAMI ---
     if (devState == HEATING) {
