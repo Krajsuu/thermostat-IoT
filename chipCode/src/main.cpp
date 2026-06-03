@@ -75,15 +75,27 @@ int dotX = 48, dotY = 32;
 
 bool shouldConnectWiFi = false;
 
+static unsigned long s_lastOledRecoverMs = 0;
+static void recoverOledAfterHeaterOn() {
+    const unsigned long kMinGapMs = 350;
+    unsigned long t = millis();
+    if (t - s_lastOledRecoverMs < kMinGapMs) {
+        return;
+    }
+    s_lastOledRecoverMs = t;
+    delay(50);  // krótki czas na ustabilizowanie zasilania po zadziałaniu przekaźnika
+    display.begin();
+}
+
 void scanWiFiNetworks() {
     Serial.println("Rozpoczynam skanowanie Wi-Fi...");
 
-    // Tryb Station jest wymagany do skanowania
+
     WiFi.mode(WIFI_STA);
     WiFi.disconnect();
     delay(100);
 
-    // scanNetworks zwraca liczbę znalezionych sieci
+
     int n = WiFi.scanNetworks();
     Serial.println("Skanowanie zakończone.");
 
@@ -474,6 +486,15 @@ void loop() {
             digitalWrite(RELAY_HEATER, HIGH);
             digitalWrite(RELAY_FAN, LOW);
         }
+    }
+
+    {
+        static bool s_prevHeaterOn = false;
+        const bool heaterOn = (digitalRead(RELAY_HEATER) == LOW);
+        if (heaterOn && !s_prevHeaterOn) {
+            recoverOledAfterHeaterOn();
+        }
+        s_prevHeaterOn = heaterOn;
     }
 
     // Obsługa joysticka (tylko w trybie AUTO)
