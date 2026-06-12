@@ -2,3 +2,4 @@
 chipCode/.vscode
 chipCode/include/secrets.h
 chipCode/.gitignore
+/vendor
