@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\{HomeController , ControlPanelController, InfluxController, AuthController , DeviceController , ProfileController};
+use App\Http\Controllers\{HomeController , ControlPanelController, InfluxController, AuthController , DeviceController , ProfileController, EntriaAuthController};
 use App\Http\Controllers\DeviceCommandController;
 
 Route::get('/', function () {
@@ -13,6 +13,8 @@ Route::get('/login',[AuthController::class, 'view'])->name('auth');
 Route::post('/register', [AuthController::class, 'register'])->name('register.store');
 Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+Route::get('/auth/entria/redirect', [EntriaAuthController::class, 'redirect']);
+Route::get('/auth/entria/callback',[EntriaAuthController::class, 'callback'])->name('entria.callback');
 
 Route::middleware('auth')->group(function () {
     // Urządzenia
